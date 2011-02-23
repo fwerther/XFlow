@@ -68,8 +68,8 @@ import prefuse.util.UpdateListener;
 import prefuse.util.ui.JSearchPanel;
 import prefuse.visual.VisualItem;
 import prefuse.visual.VisualTable;
-import br.ufpa.linc.xflow.data.dao.AnalysisDAO;
-import br.ufpa.linc.xflow.data.dao.AuthorDAO;
+import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
+import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
@@ -291,8 +291,7 @@ public class StackedAreaRenderer {
 	}
 
 	private void addDatatableData() throws DatabaseException {
-		Analysis currentAnalysis = new AnalysisDAO().findById(Analysis.class, 1L);
-		List<Author> authorsList = new AuthorDAO().getProjectAuthors(currentAnalysis.getProject().getId());
+		List<Author> authorsList = new AuthorDAO().getProjectAuthors(AbstractVisualization.getCurrentAnalysis().getProject().getId());
 		yAxisRangeModel = new NumberRangeModel(0, 0, 0, 0);
 		for (Author author : authorsList) {
 			datatable.addRow();

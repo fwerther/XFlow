@@ -62,7 +62,7 @@ import org.jfree.data.xy.IntervalXYDataset;
 import org.jfree.data.xy.XYIntervalSeries;
 import org.jfree.data.xy.XYIntervalSeriesCollection;
 
-import br.ufpa.linc.xflow.data.dao.AuthorDAO;
+import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.commons.util.ColorPalette;
@@ -174,7 +174,8 @@ public class BarChartRenderer {
 
 	private void createDatasets() throws DatabaseException{
 
-		List<Author> authorsList = new AuthorDAO().getProjectAuthors(AbstractVisualization.getCurrentAnalysis().getProject().getId());
+		List<Author> authorsList = br.ufpa.linc.xflow.presentation.Visualizer.getMetricsSession().getAssociatedAnalysis().getProject().getAuthorsListByEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
+//		List<Author> authorsList = new AuthorDAO().getProjectAuthorsUntilEntry(AbstractVisualization.getCurrentAnalysis().getProject().getId(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getId(), AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced());
 		this.dataset = new XYIntervalSeriesCollection();
 		
 		Calendar calendar = Calendar.getInstance();

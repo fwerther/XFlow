@@ -38,7 +38,7 @@ import java.util.List;
 
 import prefuse.data.search.SearchTupleSet;
 import prefuse.util.ui.JSearchPanel;
-import br.ufpa.linc.xflow.data.dao.ObjFileDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
 
@@ -65,9 +65,14 @@ public class JCustomSearchPanel extends JSearchPanel {
 	protected void searchUpdate() {
         String query = m_queryF.getText();
         if(query.trim().length() > 0){
-        	List<String> filePaths = null;
+        	final List<String> filePaths = null;
 			try {
-				filePaths = new ObjFileDAO().getFilesPathFromSequenceNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
+				//TODO: CORRIGIR! ATÉ QUARTA!!
+				if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
+					filePaths = new ObjFileDAO().getFilesPathFromSequenceNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
+				} else {
+					filePaths = new ObjFileDAO().getFilesPathFromRevisionNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
+				}
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
 			} catch (DatabaseException e) {

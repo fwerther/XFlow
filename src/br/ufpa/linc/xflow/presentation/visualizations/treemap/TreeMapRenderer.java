@@ -89,7 +89,7 @@ public class TreeMapRenderer {
 	private SearchQueryBinding highlightedFiles;
 	
 	public TreeMapRenderer() throws DatabaseException {
-		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), -1);
+		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), 1551);
 	}
 
 	public JPanel draw() {

@@ -35,18 +35,17 @@ package br.ufpa.linc.xflow.metrics;
 
 import java.util.ArrayList;
 
-import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
 
 public interface MetricModel {
 
-	public double getAverageValue(Analysis analysis) throws DatabaseException;
-	public double getStdDevValue(Analysis analysis) throws DatabaseException;
+	public double getAverageValue(Metrics metrics) throws DatabaseException;
+	public double getStdDevValue(Metrics metrics) throws DatabaseException;
 	public String getMetricName();
-	public double getMetricValue(Analysis analysis, Entry entry) throws DatabaseException;
-	public MetricValuesTable getMetricTable(Analysis analysis, Entry entry) throws DatabaseException;
-	public ArrayList<? extends MetricValuesTable> getAllMetricsTables(Analysis analysis) throws DatabaseException;
+	public double getMetricValue(Metrics metrics, Entry entry) throws DatabaseException;
+	public ArrayList<? extends MetricValuesTable> getAllMetricsTables(Metrics metrics) throws DatabaseException;
 	
 }

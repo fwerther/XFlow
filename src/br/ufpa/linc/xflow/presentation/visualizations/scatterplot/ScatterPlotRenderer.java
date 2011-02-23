@@ -71,13 +71,16 @@ import prefuse.util.ui.JSearchPanel;
 import prefuse.visual.VisualItem;
 import prefuse.visual.VisualTable;
 import prefuse.visual.expression.VisiblePredicate;
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
-import br.ufpa.linc.xflow.data.dao.EntryMetricsDAO;
-import br.ufpa.linc.xflow.data.dao.ProjectMetricsDAO;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.metrics.EntryMetricsDAO;
+import br.ufpa.linc.xflow.data.dao.metrics.FileMetricsDAO;
+import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricValues;
+import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
+import br.ufpa.linc.xflow.metrics.file.FileMetricValues;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricValues;
 import br.ufpa.linc.xflow.presentation.Visualizer;
@@ -182,7 +185,7 @@ public class ScatterPlotRenderer {
 		ActionList xAxisActions = new ActionList();
 		
 		xAxisQueryBinding = new RangeQueryBinding(visualTable, "Commit Sequence");
-		xAxis = new AxisLayout("commits", "Revision Number", Constants.X_AXIS, VisiblePredicate.TRUE);
+		xAxis = new AxisLayout("commits", "Commit Sequence", Constants.X_AXIS, VisiblePredicate.TRUE);
 		xAxis.setLayoutBounds(dataContainer);
 		xLabels = new AxisLabelLayout("xAxis", xAxis, xAxisLabelsContainer);
 		xAxis.setRangeModel(xAxisQueryBinding.getModel());
@@ -361,6 +364,12 @@ public class ScatterPlotRenderer {
 		dataTable.addColumn("Modified Files", int.class);
 		dataTable.addColumn("Deleted Files", int.class);
 		dataTable.addColumn("Entry Lines of Code", int.class);
+		dataTable.addColumn("Higher Centrality", int.class);
+		dataTable.addColumn("Average Centrality", double.class);
+		dataTable.addColumn("Max Centrality", int.class);
+		dataTable.addColumn("Higher Betweenness Centrality", int.class);
+		dataTable.addColumn("Average Betweenness Centrality", double.class);
+		dataTable.addColumn("Max Betweenness Centrality", int.class);
 	}
 	
 //	private void addDataTableData() {
@@ -379,7 +388,9 @@ public class ScatterPlotRenderer {
 
 		ProjectMetricModel[] availableProjectMetrics = (ProjectMetricModel[]) Visualizer.getAvailableProjectMetrics();
 		EntryMetricModel[] availableEntryMetrics = (EntryMetricModel[]) Visualizer.getAvailableEntryMetrics();
-//		FileMetricModel[] availableFileMetrics = (FileMetricModel[]) Visualizer.getAvailableFileMetrics();
+		FileMetricModel[] availableFileMetrics = (FileMetricModel[]) Visualizer.getAvailableFileMetrics();
+		final String[] metricNamesVariations = new String[]{"Higher ", "Average ", "Max "};
+		double[] metricValues = new double[(availableFileMetrics.length*metricNamesVariations.length)];
 		
 		/* 
 		 * ###################################
@@ -389,7 +400,7 @@ public class ScatterPlotRenderer {
 		
 		double[] higherProjectMetricValues = new double[availableProjectMetrics.length];
 		double[] higherEntryMetricValues = new double[availableEntryMetrics.length];
-//		double[] higherFileMetricValues = new double[availableFileMetrics.length];
+		double[] higherFileMetricValues = new double[availableFileMetrics.length];
 		
 		List<Entry> entries = new EntryDAO().getAllEntriesWithinEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
 		
@@ -407,7 +418,7 @@ public class ScatterPlotRenderer {
 			dataTable.set(dataTable.getRowCount()-1, "Files", entry.getListOfEntryFiles());
 
 			if(availableProjectMetrics.length > 0){
-				ProjectMetricValues projectMetricsValues = new ProjectMetricsDAO().findProjectMetricValuesByEntry(AbstractVisualization.getCurrentAnalysis(), entry);
+				ProjectMetricValues projectMetricsValues = new ProjectMetricsDAO().findProjectMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
 				if(projectMetricsValues != null){
 					for (int j = 0; j < availableProjectMetrics.length; j++) {
 						double metricValue = projectMetricsValues.getValueByName(availableProjectMetrics[j].getMetricName());
@@ -418,7 +429,7 @@ public class ScatterPlotRenderer {
 			}
 
 			if(availableEntryMetrics.length > 0){
-				EntryMetricValues entryMetricsValues = new EntryMetricsDAO().findEntryMetricValuesByEntry(AbstractVisualization.getCurrentAnalysis(), entry);
+				EntryMetricValues entryMetricsValues = new EntryMetricsDAO().findEntryMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
 				if(entryMetricsValues != null){
 					for (int j = 0; j < availableEntryMetrics.length; j++) {
 						double metricValue = entryMetricsValues.getValueByName(availableEntryMetrics[j].getMetricName());
@@ -428,27 +439,42 @@ public class ScatterPlotRenderer {
 				}
 			}
 
-//			if(availableFileMetrics.length > 0){
-//				FileMetricValues fileMetricsValues = new FileMetricsDAO().findFileMetricValuesByRevision(currentAnalysis, i);
-//				if(fileMetricsValues != null){
-//					for (int j = 0; j < availableEntryMetrics.length; j++) {
-//						if(fileMetricsValues != null){
-//							dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), entryMetricsValues.getValueByName(availableEntryMetrics[j].getMetricName()));
-//
-//						}
-//					}
-//				}
-//			}
+			if(availableFileMetrics.length > 0){
+				List<FileMetricValues> fileMetricsValues = new FileMetricsDAO().findFileMetricValuesByRevision(Visualizer.getMetricsSession(), entry);
+				if(fileMetricsValues != null){
+					for (FileMetricValues fileMetricValue : fileMetricsValues) {
+						for (int j = 0; j < availableFileMetrics.length; j++) {
+							metricValues[(j*metricNamesVariations.length)] = 0;
+						}
+						for (int j = 0; j < availableFileMetrics.length; j++) {
+							final double metricValue = fileMetricValue.getValueByName(availableFileMetrics[j].getMetricName());
+							higherFileMetricValues[j] = Math.max(higherFileMetricValues[j], metricValue);
+							metricValues[(j*metricNamesVariations.length)] = (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
+							metricValues[(j*metricNamesVariations.length)+1] += metricValue;
+							metricValues[(j*metricNamesVariations.length)+2] += (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
+						}
+					}
 
-			dataTable.addRow();
-			dataTable.set(dataTable.getRowCount()-1, "Author", "Reference");
-			dataTable.set(dataTable.getRowCount()-1, "AuthorID", -1);
-			for (int j = 0; j < higherProjectMetricValues.length; j++) {
-				dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), higherProjectMetricValues[j]);
+					for (int j = 0; j < availableFileMetrics.length; j++) {
+						for (int k = 0; k < metricNamesVariations.length; k++) {
+							dataTable.set(dataTable.getRowCount()-1, metricNamesVariations[k]+availableFileMetrics[j].getMetricName(), metricValues[(j*metricNamesVariations.length) + k]);
+						}
+					}
+				}
 			}
-			for (int j = 0; j < higherEntryMetricValues.length; j++) {
-				dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), higherEntryMetricValues[j]);
-			}
+
+//			dataTable.addRow();
+//			dataTable.set(dataTable.getRowCount()-1, "Author", "Reference");
+//			dataTable.set(dataTable.getRowCount()-1, "AuthorID", 9999);
+//			for (int j = 0; j < higherProjectMetricValues.length; j++) {
+//				dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), higherProjectMetricValues[j]);
+//			}
+//			for (int j = 0; j < higherEntryMetricValues.length; j++) {
+//				dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), higherEntryMetricValues[j]);
+//			}
+//			for (int j = 0; j < higherFileMetricValues.length; j++) {
+//				dataTable.set(dataTable.getRowCount()-1, "Max "+availableFileMetrics[j].getMetricName(), higherFileMetricValues[j]);
+//			}
 		}
 	}
 

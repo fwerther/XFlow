@@ -42,7 +42,7 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
@@ -71,7 +71,7 @@ public class SliderControl extends JSlider implements ChangeListener, MouseListe
 				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().setHighQuality(false);
 			}
 			if (Visualizer.getTreeMapView() != null){
-				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(false);
+//				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(false);
 				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(false);
 			}
 			if (Visualizer.getGraphView() != null){
@@ -118,10 +118,10 @@ public class SliderControl extends JSlider implements ChangeListener, MouseListe
 				Visualizer.getAnalysisInfoBar().getLastRevisionLabel().setText(Visualizer.getAnalysisInfoBar().LAST_REVISION_LABEL_TEXT + " ("+this.getValue()+")");
 			}
 			if (Visualizer.getTreeMapView() != null){
-				Visualizer.getTreeMapView().getTreeMapRenderer().updateTree(getValue());
+//				Visualizer.getTreeMapView().getTreeMapRenderer().updateTree(getValue());
 				Visualizer.getTreeMapView().getTreeMapNewLayout().updateTree(getValue());
 				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(true);
-				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(true);
+//				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(true);
 			}
 			if (Visualizer.getGraphView() != null){
 				Visualizer.getGraphView().getGraphRenderer().updateGraph(getValue());

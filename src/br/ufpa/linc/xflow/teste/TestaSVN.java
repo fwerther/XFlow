@@ -2,7 +2,7 @@ package br.ufpa.linc.xflow.teste;
 
 import org.tmatesoft.svn.core.SVNException;
 
-import br.ufpa.linc.xflow.data.dao.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.svn.SVNProtocolNotSupportedException;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;

@@ -50,6 +50,7 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.data.time.TimePeriodValuesCollection;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
@@ -67,6 +68,8 @@ public class LineChartRenderer {
 
 	private JFreeChart chart;
 	private XYSeriesCollection numericDataset;
+	private TimePeriodValuesCollection temporalDataset;
+	
 	private HashMap<String, Integer> seriesMap;
 	
 	private String selectedMetric;
@@ -77,12 +80,11 @@ public class LineChartRenderer {
 
 	public JPanel draw() {
 		if(Visualizer.getAvailableProjectMetrics().length > 0){
-			selectedMetric = Visualizer.getAvailableProjectMetrics()[0].getMetricName();
+			selectedMetric = "Revision "+Visualizer.getAvailableProjectMetrics()[0].getMetricName();
 		}
 		else if(Visualizer.getAvailableEntryMetrics().length > 0){
-			selectedMetric = Visualizer.getAvailableEntryMetrics()[0].getMetricName();
+			selectedMetric = "Revision "+Visualizer.getAvailableEntryMetrics()[0].getMetricName();
 		}
-
 		JPanel numericChartPanel = createNumericChart();
 		return numericChartPanel;
 	}
@@ -163,7 +165,11 @@ public class LineChartRenderer {
 		integerDomainAxis.setStandardTickUnits(NumberAxis.createIntegerTickUnits());
 //		rangeAxis.setLabelFont(new Font("Helvetica", Font.BOLD, 15));
 //		rangeAxis.setLabelInsets(new RectangleInsets(20,20,20,20));
-		integerDomainAxis.setLabel("Revisions");
+		if(selectedMetric.contains("Revision")){
+			integerDomainAxis.setLabel("Revisions");
+		} else {
+			integerDomainAxis.setLabel("Sequence");
+		}
 		return integerDomainAxis;
 	}
 
@@ -179,13 +185,17 @@ public class LineChartRenderer {
 		ProjectMetricModel[] projectMetrics = Visualizer.getAvailableProjectMetrics();
 		for (MetricModel metric : projectMetrics) {
 
-			seriesMap.put(metric.getMetricName(), seriesMap.size());			
-			ArrayList<? extends MetricValuesTable> metricValuesTable = metric.getAllMetricsTables(currentAnalysis);
+			seriesMap.put("Sequential "+metric.getMetricName(), seriesMap.size());			
+			seriesMap.put("Revision "+metric.getMetricName(), seriesMap.size());
+			ArrayList<? extends MetricValuesTable> metricValuesTable = metric.getAllMetricsTables(Visualizer.getMetricsSession());
 
-			final XYSeries revisionsDataset = new XYSeries(metric.getMetricName(), false);
-			for (MetricValuesTable metricValue : metricValuesTable) {
-				revisionsDataset.add(metricValue.getEntry().getRevision(), metric.getMetricValue(currentAnalysis, metricValue.getEntry()));
+			final XYSeries sequentialDataset = new XYSeries("Sequential "+metric.getMetricName());
+			final XYSeries revisionsDataset = new XYSeries("Revision "+metric.getMetricName());
+			for (int i = 0; i < metricValuesTable.size(); i++) {
+				sequentialDataset.add(i, metric.getMetricValue(Visualizer.getMetricsSession(), metricValuesTable.get(i).getEntry()));
+				revisionsDataset.add(metricValuesTable.get(i).getEntry().getRevision(), metric.getMetricValue(Visualizer.getMetricsSession(), metricValuesTable.get(i).getEntry()));
 			}
+			this.numericDataset.addSeries(sequentialDataset);
 			this.numericDataset.addSeries(revisionsDataset);
 		}
 		
@@ -195,27 +205,31 @@ public class LineChartRenderer {
 		EntryMetricModel[] entryMetrics = Visualizer.getAvailableEntryMetrics();
 		for (MetricModel metric : entryMetrics) {
 
-			seriesMap.put(metric.getMetricName(), seriesMap.size());			
-			ArrayList<? extends MetricValuesTable> metricValuesTable = metric.getAllMetricsTables(currentAnalysis);
+			seriesMap.put("Sequential "+metric.getMetricName(), seriesMap.size());
+			seriesMap.put("Revision "+metric.getMetricName(), seriesMap.size());
+			ArrayList<? extends MetricValuesTable> metricValuesTable = metric.getAllMetricsTables(Visualizer.getMetricsSession());
 
-			final XYSeries sequentialDataset = new XYSeries(metric.getMetricName(), false);
-			for (MetricValuesTable metricValue : metricValuesTable) {
-				sequentialDataset.add(metricValue.getEntry().getRevision(), metric.getMetricValue(currentAnalysis, metricValue.getEntry()));
+			final XYSeries sequentialDataset = new XYSeries("Sequential "+metric.getMetricName());
+			final XYSeries revisionsDataset = new XYSeries("Revision "+metric.getMetricName());
+			for (int i = 0; i < metricValuesTable.size(); i++) {
+				sequentialDataset.add(i, metric.getMetricValue(Visualizer.getMetricsSession(), metricValuesTable.get(i).getEntry()));
+				revisionsDataset.add(metricValuesTable.get(i).getEntry().getRevision(), metric.getMetricValue(Visualizer.getMetricsSession(), metricValuesTable.get(i).getEntry()));
 			}
 			this.numericDataset.addSeries(sequentialDataset);
+			this.numericDataset.addSeries(revisionsDataset);
 		}
 		
 	}
 	
 	public void updateYAxis(String newMetric){
-		
 		int currentSerie = this.seriesMap.get(selectedMetric);
 		int newSerie = this.seriesMap.get(newMetric);
 		
 		this.getChart().getXYPlot().getRenderer().setSeriesVisible(currentSerie, new Boolean(false));
 		this.getChart().getXYPlot().getRenderer().setSeriesVisible(newSerie, new Boolean(true));
-		this.getChart().getXYPlot().getRangeAxis().setLabel(newMetric);
 		
+		final String seriesLabel = selectedMetric.substring(selectedMetric.indexOf(" "));
+		this.getChart().getXYPlot().getRangeAxis().setLabel(seriesLabel);
 		
 		this.selectedMetric = newMetric;
 	}

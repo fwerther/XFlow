@@ -63,7 +63,7 @@ import org.tmatesoft.svn.core.wc.SVNWCUtil;
 
 import br.ufpa.linc.xflow.cm.info.Artifact;
 import br.ufpa.linc.xflow.cm.info.Commit;
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.svn.SVNAuthenticationException;

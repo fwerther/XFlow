@@ -1,5 +1,6 @@
 package br.ufpa.linc.xflow.core.processors.cochanges;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -8,13 +9,15 @@ import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 import br.ufpa.linc.xflow.core.AnalysisFactory;
-import br.ufpa.linc.xflow.data.dao.AuthorDependencyObjectDAO;
-import br.ufpa.linc.xflow.data.dao.DependencyDAO;
-import br.ufpa.linc.xflow.data.dao.DependencyObjectDAO;
-import br.ufpa.linc.xflow.data.dao.FileDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
+import br.ufpa.linc.xflow.data.dao.core.DependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.DependencySetDAO;
+import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
+import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.representation.Converter;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
@@ -31,6 +34,9 @@ public final class CoChangesAnalysis extends Analysis {
 	
 	@Transient
 	private Dependency dependencyCache = null;
+	
+	@Transient
+	private JUNGGraph graphCache = null;
 	
 	@Column(name = "ANALYSIS_FILE_LIMIT_PER_REVISION", nullable = false)
 	private int maxFilesPerRevision;
@@ -103,6 +109,7 @@ public final class CoChangesAnalysis extends Analysis {
 
 
 	@Override
+	@SuppressWarnings("rawtypes")
 	public Matrix processEntryDependencyMatrix(Entry entry, int dependencyType) throws DatabaseException {
 		final Matrix matrix;
 		Dependency dependency = new DependencyDAO().findDependencyByEntry(this.getId(), entry.getId(), dependencyType);
@@ -133,13 +140,14 @@ public final class CoChangesAnalysis extends Analysis {
 
 	
 	@Override
+	@SuppressWarnings("rawtypes")
 	public final JUNGGraph processEntryDependencyGraph(final Entry entry, final int dependencyType) throws DatabaseException {
 		final Matrix matrix;
 		Dependency dependency = new DependencyDAO().findDependencyByEntry(this.getId(), entry.getId(), dependencyType);
 		
 		if(dependency == null){
 			if(dependencyCache != null){
-				return JUNGGraph.convertMatrixToJUNGGraph(matrixCache, dependencyCache);
+				return graphCache;
 			}
 			else{
 				return null;
@@ -150,43 +158,68 @@ public final class CoChangesAnalysis extends Analysis {
 			matrix = processHistoricalEntryDependencyMatrix(entry, dependency);
 			matrixCache = matrix;
 			dependencyCache = dependency;
+			graphCache = JUNGGraph.convertMatrixToJUNGGraph(matrix, dependency);
 		}
 		else{
 			Matrix processedMatrix = processDependencyMatrix(dependency);
-			matrix = processedMatrix.sumDifferentOrderMatrix(matrixCache);
-			matrixCache = matrix;
-			dependencyCache = dependency;
+//			matrix = processedMatrix.sumDifferentOrderMatrix(matrixCache);
+//			matrixCache = matrix;
+//			dependencyCache = dependency;
+			graphCache = JUNGGraph.convertMatrixToJUNGGraph(processedMatrix, dependency, graphCache);
 		}
 		
-		return JUNGGraph.convertMatrixToJUNGGraph(matrix, dependency);
+		return graphCache;
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })	
+	@SuppressWarnings("rawtypes")
+	public final JUNGGraph processDependencyGraph(final Dependency entryDependency) throws DatabaseException {
+		final Matrix matrix;
+		
+		if(entryDependency == null){
+			if(dependencyCache != null){
+				return graphCache;
+			}
+			else{
+				return null;
+			}
+		}
+		
+		if(matrixCache == null){
+			matrix = processHistoricalEntryDependencyMatrix(entryDependency);
+			matrixCache = matrix;
+			dependencyCache = entryDependency;
+			graphCache = JUNGGraph.convertMatrixToJUNGGraph(matrix, entryDependency);
+		}
+		else{
+			Matrix processedMatrix = processDependencyMatrix(entryDependency);
+//			matrix = processedMatrix.sumDifferentOrderMatrix(matrixCache);
+//			matrixCache = matrix;
+//			dependencyCache = dependency;
+			graphCache = JUNGGraph.convertMatrixToJUNGGraph(processedMatrix, entryDependency, graphCache);
+		}
+		
+		return graphCache;
+	}
+	
+	@SuppressWarnings("rawtypes")
 	public final Matrix processHistoricalEntryDependencyMatrix(final Entry entry, final Dependency dependency) throws DatabaseException {
 		
 		if(!dependency.getDependencies().isEmpty()){
-
-//			final int highestDependencyStamp = new DependencyDAO().getHighestStampUntilDependency(dependency);
-			final DependencyObjectDAO dependencyObjectDAO;
-			final List<DependencyObject> dependencies;
-
-			if(dependency.getType() == DependencyObject.FILE_DEPENDENCY){
-				dependencyObjectDAO = new FileDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findAllDependencyObjsUntilDependency(dependency);
-			}
-			else if(dependency.getType() == Dependency.AUTHOR_FILE_DEPENDENCY){
-				dependencyObjectDAO = new AuthorDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findAllDependencyObjsUntilDependency(dependency);
-			}
-			else if(dependency.getType() == Dependency.AUTHOR_AUTHOR_DEPENDENCY){
-				dependencyObjectDAO = new AuthorDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findAllDependencyObjsUntilDependency(dependency);
-			}
-			else {
-				dependencies = null;
-			}
-
-			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencies, false);
+			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
+			final Matrix matrix = Converter.convertDependenciesToMatrixNew(dependencies, false);
+			return matrix;
+		}
+		else{
+			return matrixCache;
+		}
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public final Matrix processHistoricalEntryDependencyMatrix(final Dependency dependency) throws DatabaseException {
+		
+		if(!dependency.getDependencies().isEmpty()){
+			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
+			final Matrix matrix = Converter.convertDependenciesToMatrixNew(dependencies, false);
 			return matrix;
 		}
 		else{
@@ -194,30 +227,11 @@ public final class CoChangesAnalysis extends Analysis {
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })	
+	@SuppressWarnings("rawtypes")
 	public final Matrix processDependencyMatrix(final Dependency dependency) throws DatabaseException {
-
+		
 		if(!dependency.getDependencies().isEmpty()){
-
-//			final int highestDependencyStamp = new DependencyDAO().getHighestStampUntilDependency(dependency);
-			final DependencyObjectDAO dependencyObjectDAO;
-
-			List<DependencyObject> dependencies = null;
-
-			if(dependency.getType() == Dependency.FILE_FILE_DEPENDENCY){
-				dependencyObjectDAO = new FileDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findDependencyObjsByDependency(dependency);
-			}
-			else if(dependency.getType() == Dependency.AUTHOR_FILE_DEPENDENCY){
-				dependencyObjectDAO = new AuthorDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findAllDependencyObjsUntilDependency(dependency);
-			}
-			else if(dependency.getType() == Dependency.AUTHOR_AUTHOR_DEPENDENCY){
-				dependencyObjectDAO = new AuthorDependencyObjectDAO();
-				dependencies = dependencyObjectDAO.findAllDependencyObjsUntilDependency(dependency);
-			}
-
-			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencies, dependency.isDirectedDependency());
+			final Matrix matrix = Converter.convertDependenciesToMatrixNew(new ArrayList<DependencySet>(dependency.getDependencies()), dependency.isDirectedDependency());
 			return matrix;
 		}
 		else {

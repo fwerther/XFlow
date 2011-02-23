@@ -35,7 +35,6 @@ package br.ufpa.linc.xflow.presentation.visualizations.line.controls;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
@@ -53,17 +52,22 @@ import br.ufpa.linc.xflow.presentation.Visualizer;
 public class LineViewAxesUpdater implements LineViewController, ActionListener {
 
 	private JLabel metricPickerLabel;
+	private JLabel timescalePickerLabel;
 	private JComboBox metricPicker;
-	//private JComboBox timescalePicker;
-
+	private JComboBox timescalePicker;
+	
 	@Override
 	public JComponent getControlComponent() {
 
 		metricPickerLabel = new JLabel("Selected metric:");
-		metricPickerLabel.setFont(new Font("Tahoma", 0, 12));
-
+		timescalePickerLabel = new JLabel("Selected temporal axis:");
+		
 		metricPicker = createMetricsComboBox();
 		metricPicker.addActionListener(this);
+		
+		timescalePicker = createTimescaleComboBox();
+		timescalePicker.addActionListener(this);
+
 
 		JPanel panel = new JPanel();
 		panel.setBackground(Color.white);
@@ -81,14 +85,26 @@ public class LineViewAxesUpdater implements LineViewController, ActionListener {
 		metricPickerComboBox.setPreferredSize(new Dimension(140, 25));
 		return metricPickerComboBox;
 	}
+	
+	private JComboBox createTimescaleComboBox() {
+		final String[] timescaleOptions = new String[]{"Sequence Number", "Revision Number"};
+
+		JComboBox timescaleComboBox = new JComboBox(timescaleOptions);
+		timescaleComboBox.setPreferredSize(new Dimension(140, 25));
+		return timescaleComboBox;
+	}
 
 	private void setupLayout(JPanel panel) {
 		GroupLayout layout = new GroupLayout(panel);
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addContainerGap(298, Short.MAX_VALUE)
 				.addComponent(metricPickerLabel)
-				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 				.addComponent(metricPicker, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+				.addComponent(timescalePickerLabel)
+				.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+				.addComponent(timescalePicker, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 				.addContainerGap(317, Short.MAX_VALUE)
 		);
 
@@ -98,6 +114,8 @@ public class LineViewAxesUpdater implements LineViewController, ActionListener {
 						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(metricPicker, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
 								.addComponent(metricPickerLabel)
+								.addComponent(timescalePicker, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+								.addComponent(timescalePickerLabel)
 						)
 						.addContainerGap()
 				)
@@ -109,8 +127,12 @@ public class LineViewAxesUpdater implements LineViewController, ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		JComboBox cb = (JComboBox) event.getSource();
-		if(cb.equals(metricPicker)){
-			Visualizer.getLineView().getLineChartRenderer().updateYAxis((String) metricPicker.getSelectedItem());
+		if((cb.equals(metricPicker)) || (cb.equals(timescalePicker))){
+			if(((String) timescalePicker.getSelectedItem()).contains("Revision")){
+				Visualizer.getLineView().getLineChartRenderer().updateYAxis("Revision "+(String) metricPicker.getSelectedItem());
+			} else {
+				Visualizer.getLineView().getLineChartRenderer().updateYAxis("Sequential "+(String) metricPicker.getSelectedItem());
+			}
 		}
 		//        else{
 		//        	System.out.println("time");

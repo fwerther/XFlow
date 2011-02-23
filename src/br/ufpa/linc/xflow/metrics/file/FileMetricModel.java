@@ -35,11 +35,12 @@ package br.ufpa.linc.xflow.metrics.file;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import br.ufpa.linc.xflow.data.dao.FileMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.FileMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
@@ -52,13 +53,12 @@ public abstract class FileMetricModel implements MetricModel {
 	abstract public void evaluate(JUNGGraph dependencyGraph, long fileID, FileMetricValues table) throws DatabaseException;
 	
 	@Override
-	public final ArrayList<FileMetricValues> getAllMetricsTables(Analysis analysis) throws DatabaseException {
-		return new FileMetricsDAO().getFileMetricValues(analysis);
+	public final ArrayList<FileMetricValues> getAllMetricsTables(Metrics metrics) throws DatabaseException {
+		return new FileMetricsDAO().getFileMetricValues(metrics);
 	}
 	
-	@Override
-	public final FileMetricValues getMetricTable(Analysis analysis, Entry entry) throws DatabaseException {
-		return new FileMetricsDAO().findFileMetricValuesByRevision(analysis, entry);
+	public final List<FileMetricValues> getMetricTable(Metrics metrics, Entry entry) throws DatabaseException {
+		return new FileMetricsDAO().findFileMetricValuesByRevision(metrics, entry);
 	}
 	
 	public static void initiateCache() {

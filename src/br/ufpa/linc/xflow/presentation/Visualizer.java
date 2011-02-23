@@ -45,14 +45,18 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 
-import br.ufpa.linc.xflow.data.dao.AnalysisDAO;
+import br.ufpa.linc.xflow.data.dao.metrics.MetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.entities.Author;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.entry.AddedFiles;
 import br.ufpa.linc.xflow.metrics.entry.DeletedFiles;
 import br.ufpa.linc.xflow.metrics.entry.EntryLOC;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
 import br.ufpa.linc.xflow.metrics.entry.ModifiedFiles;
+import br.ufpa.linc.xflow.metrics.file.Betweenness;
+import br.ufpa.linc.xflow.metrics.file.Centrality;
 import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
 import br.ufpa.linc.xflow.metrics.project.ClusterCoefficient;
 import br.ufpa.linc.xflow.metrics.project.Density;
@@ -77,11 +81,11 @@ public class Visualizer {
 	
 	private boolean[] visibleVisualizations;
 	
-	private static LineView lineView;
-	private static GraphView graphView;
-	private static ScatterPlotView scatterPlotView;
-	private static TreeMapView treeMapView;
-	private static ActivityView activityView;
+	private static LineView lineView = null;
+	private static GraphView graphView = null;
+	private static ScatterPlotView scatterPlotView = null;
+	private static TreeMapView treeMapView = null;
+	private static ActivityView activityView = null;
 	
 	private static DevelopersPanelControl developersPanel;
 	private static AnalysisInfoPanel analysisInfoBar;
@@ -93,51 +97,60 @@ public class Visualizer {
 		new AddedFiles(), new ModifiedFiles(), new DeletedFiles(), new EntryLOC()
 	};
 	private static FileMetricModel[] availableFileMetrics = new FileMetricModel[]{
-//		new AddedFiles(), new ModifiedFiles(), new DeletedFiles(), new EntryLOC()
+		new Centrality(), new Betweenness()
+//		, new EntryLOC()
 	};
+	
+	private static Metrics metricsSession;
 	
 	private JPanel visualizationsPanel;
 	
-	public JPanel composeVisualizationsPane(Analysis analysis) throws DatabaseException{
+	public JPanel composeVisualizationsPane(Metrics metrics) throws DatabaseException{
+		metricsSession = metrics;
 		JTabbedPane visualizationsPlacer = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-		AbstractVisualization.setCurrentAnalysis(analysis);
-		ColorPalette.initiateColors(analysis.getProject().getAuthors().size());
+		AbstractVisualization.setCurrentAnalysis(metrics.getAssociatedAnalysis());
+		List<Author> validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByEntries(metrics.getAssociatedAnalysis().getFirstEntry(), metrics.getAssociatedAnalysis().getLastEntry());
+		ColorPalette.initiateColors(validAuthors.size());
 
 		/*
 		 * COMMON CONTROLERS
 		 */
-		analysisInfoBar = new AnalysisInfoPanel(analysis);
+		analysisInfoBar = new AnalysisInfoPanel(metrics.getAssociatedAnalysis());
 		Component analysisInfoPanel = analysisInfoBar.createInfoPanel();
 		
-		developersPanel = new DevelopersPanelControl(analysis.getProject().getAuthorsStringList());
+		developersPanel = new DevelopersPanelControl(validAuthors);
 		Component developersPane = developersPanel.createControlPanel();
 		
 		
 		/*
 		 * VISUALIZATIONS
 		 */
+		System.out.println("generating line view");
 		if(visibleVisualizations[LINE_VIEW]){
 			lineView = new LineView();
 			JPanel lineViewPanel = lineView.composeVisualizationPanel();
 			visualizationsPlacer.addTab("Line view", lineViewPanel);
 		}
 		
+		System.out.println("generating graph view");
 		if(visibleVisualizations[GRAPH_VIEW]){
 			graphView = new GraphView();
 			JPanel graphViewPanel = graphView.composeVisualizationPanel();
 			visualizationsPlacer.addTab("Graph View", graphViewPanel);
 		}
 		
+		System.out.println("generating scatterplot");
 		if(visibleVisualizations[SCATTERPLOT_VIEW]){
 			scatterPlotView = new ScatterPlotView();
 			JPanel scatterPlotPanel = scatterPlotView.composeVisualizationPanel();
 			visualizationsPlacer.addTab("Scatter Plot View", scatterPlotPanel);
 		}
 		
+		System.out.println("generating treemap");
 		if(visibleVisualizations[TREEMAP_VIEW]){
 			treeMapView = new TreeMapView();
-			JPanel treeMapPanel = treeMapView.composeVisualizationPanel();
-			visualizationsPlacer.addTab("Treemap View", treeMapPanel);
+//			JPanel treeMapPanel = treeMapView.composeVisualizationPanel();
+//			visualizationsPlacer.addTab("Treemap View", treeMapPanel);
 
 			JPanel treeMapPanel2 = treeMapView.composeVisualizationPanel2();
 			visualizationsPlacer.addTab("Treemap View - new layout", treeMapPanel2);
@@ -164,6 +177,10 @@ public class Visualizer {
 		visualizationsPanel.add(splitPane, BorderLayout.CENTER);
 		
 		return visualizationsPanel;
+	}
+
+	public static Metrics getMetricsSession() {
+		return metricsSession;
 	}
 
 	public static LineView getLineView() {
@@ -260,12 +277,12 @@ public class Visualizer {
 	    }
 
 		Visualizer vis = new Visualizer();
-		vis.setEnabledVisualizations(new boolean[]{false, true, false, false, false});
+		vis.setEnabledVisualizations(new boolean[]{false, false, true, false, false});
 		
 		JFrame jframe = new JFrame();
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try {
-			jframe.add(vis.composeVisualizationsPane(new AnalysisDAO().findById(Analysis.class, 1L)));
+			jframe.add(vis.composeVisualizationsPane(new MetricsDAO().findById(Metrics.class, 3L)));
 		} catch (DatabaseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

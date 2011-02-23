@@ -35,9 +35,9 @@ package br.ufpa.linc.xflow.metrics.project;
 
 import java.util.ArrayList;
 
-import br.ufpa.linc.xflow.data.dao.ProjectMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.MetricModel;
@@ -46,13 +46,12 @@ public abstract class ProjectMetricModel implements MetricModel {
 
 	public abstract void evaluate(JUNGGraph dependencyGraph, ProjectMetricValues table);
 	
-	@Override
-	public ProjectMetricValues getMetricTable(Analysis analysis, Entry entry) throws DatabaseException {
-		return new ProjectMetricsDAO().findProjectMetricValuesByEntry(analysis, entry);
+	public ProjectMetricValues getMetricTable(Metrics metrics, Entry entry) throws DatabaseException {
+		return new ProjectMetricsDAO().findProjectMetricValuesByEntry(metrics, entry);
 	}
 	
 	@Override
-	public final ArrayList<ProjectMetricValues> getAllMetricsTables(Analysis analysis) throws DatabaseException {
-		return new ProjectMetricsDAO().getProjectMetricValues(analysis);
+	public final ArrayList<ProjectMetricValues> getAllMetricsTables(Metrics metrics) throws DatabaseException {
+		return new ProjectMetricsDAO().getProjectMetricValues(metrics);
 	}
 }

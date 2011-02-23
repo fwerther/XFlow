@@ -33,9 +33,9 @@
 
 package br.ufpa.linc.xflow.metrics.project;
 
-import br.ufpa.linc.xflow.data.dao.ProjectMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGEdge;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
@@ -71,18 +71,18 @@ public class Density extends ProjectMetricModel {
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) throws DatabaseException {
-		return new ProjectMetricsDAO().getDensityAverageValue(analysis);
+	public final double getAverageValue(final Metrics metrics) throws DatabaseException {
+		return new ProjectMetricsDAO().getDensityAverageValue(metrics);
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) throws DatabaseException {
-		return new ProjectMetricsDAO().getDensityDeviationValue(analysis);
+	public final double getStdDevValue(final Metrics metrics) throws DatabaseException {
+		return new ProjectMetricsDAO().getDensityDeviationValue(metrics);
 	}
 
 	@Override
-	public final double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new ProjectMetricsDAO().getDensityMetricValueByEntry(analysis, entry);
+	public final double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new ProjectMetricsDAO().getDensityMetricValueByEntry(metrics, entry);
 	}
 
 }

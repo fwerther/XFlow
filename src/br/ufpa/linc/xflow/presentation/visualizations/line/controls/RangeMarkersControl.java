@@ -42,10 +42,10 @@ import java.awt.event.ItemListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
 import org.jfree.chart.plot.ValueMarker;
@@ -57,7 +57,6 @@ import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.MetricModel;
 import br.ufpa.linc.xflow.metrics.MetricsUtil;
 import br.ufpa.linc.xflow.presentation.Visualizer;
-import br.ufpa.linc.xflow.presentation.visualizations.line.LineView;
 
 public class RangeMarkersControl implements LineViewController, ItemListener {
 
@@ -129,7 +128,7 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
 		
 		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(LineView.getCurrentAnalysis());
+		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
 
 		averageMarker = new ValueMarker(averageValue);
 		averageMarker.setPaint(Color.black);
@@ -145,8 +144,8 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
 		
 		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(LineView.getCurrentAnalysis());
-		double deviationValue = selectedMetric.getStdDevValue(LineView.getCurrentAnalysis());
+		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
+		double deviationValue = selectedMetric.getStdDevValue(Visualizer.getMetricsSession());
 		
 		firstDeviationTop = new ValueMarker(averageValue + deviationValue);
 		firstDeviationTop.setPaint(Color.RED);
@@ -170,8 +169,8 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
 		
 		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(LineView.getCurrentAnalysis());
-		double deviationValue = selectedMetric.getStdDevValue(LineView.getCurrentAnalysis());
+		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
+		double deviationValue = selectedMetric.getStdDevValue(Visualizer.getMetricsSession());
 		
 		secondDeviationTop = new ValueMarker(averageValue + (deviationValue * 2));
 		secondDeviationTop.setPaint(Color.YELLOW);

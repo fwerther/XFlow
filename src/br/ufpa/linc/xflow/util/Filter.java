@@ -46,7 +46,8 @@ public class Filter {
 	}
 	
 	public boolean match(final String filter){
-		final Pattern pattern = Pattern.compile("(.*?)\\.("+extension+")$");
+//		final Pattern pattern = Pattern.compile("(.*?)\\.("+extension+")$");
+		final Pattern pattern = Pattern.compile(""+extension);
 		final Matcher matcher = pattern.matcher(filter);
 		return(matcher.matches());
 	}

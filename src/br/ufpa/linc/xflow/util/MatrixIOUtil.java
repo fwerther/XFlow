@@ -36,7 +36,10 @@ package br.ufpa.linc.xflow.util;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import br.ufpa.linc.xflow.data.dao.AuthorDAO;
+import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.entities.Dependency;
+import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.data.representation.matrix.Matrix;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
@@ -61,44 +64,57 @@ public abstract class MatrixIOUtil {
 //		}
 //	}
 //
-//	private static void exportMatrixToUCINetCompatibleFile(Matrix matrix, String destinyFolder) throws IOException, DatabaseException {
+//	public static void exportMatrixToUCINetCompatibleFile(Dependency dependency, Matrix matrix, String destinyFolder) throws IOException, DatabaseException {
 //		FileWriter writer = new FileWriter(destinyFolder);
 //
-//		writer.append("DL N = "+matrix.getMatrix().length+"\n");
+//		writer.append("DL N = "+matrix.getRows()+"\n");
 //		writer.append("FORMAT = fullmatrix\n");
 //		writer.append("LABELS EMBEDDED\n");
 //		writer.append("DATA:\n");
 //		
-//		if(matrix.getName().equals("Coordination Requirements")){
-//			for (int i = 0; i < matrix.getMatrix().length; i++) {
-//				String authorName =  new MatrixAuthorPositionDAO().findAuthorFromPosition(i, matrix.getAssociatedAnalysis()).getName();;
+//		if(dependency.getType() == Dependency.AUTHOR_AUTHOR_DEPENDENCY){
+//			for (int i = 0; i < matrix.getRows(); i++) {
+//				String authorName = new AuthorDependencyObjectDAO().findDependencyObjectByStamp(dependency.getAssociatedAnalysis(), i).getAuthor().getName();
 //				writer.append(authorName+" ");
 //			}
 //			writer.append('\n');
 //
-//			for (int i = 0; i < matrix.getMatrix().length; i++) {
-//				String authorName =  new MatrixAuthorPositionDAO().findAuthorFromPosition(i, matrix.getAssociatedAnalysis()).getName();;
+//			for (int i = 0; i < matrix.getRows(); i++) {
+//				String authorName = new AuthorDependencyObjectDAO().findDependencyObjectByStamp(dependency.getAssociatedAnalysis(), i).getAuthor().getName();
 //				writer.append(authorName+" ");
-//				for (int j = 0; j < matrix.getMatrix()[0].length; j++) {
+//				for (int j = 0; j < matrix.getColumns(); j++) {
 //					writer.append(matrix.get(i,j)+" ");
 //				}
 //				writer.append('\n');
 //			}
 //		}
-//		else if(matrix.getName().contains("Task")){
-//			for (int i = 0; i < matrix.getMatrix().length; i++) {
-//				long fileID =  new MatrixFilePositionDAO().findFileFromPosition(i, matrix.getAssociatedAnalysis()).getId();;
-//				writer.append(fileID+" ");
+//		else if(dependency.getType() == Dependency.FILE_FILE_DEPENDENCY){
+//			for (int i = 0; i < matrix.getRows(); i++) {
+//				FileDependencyObject fileDTO = new FileDependencyObjectDAO().findDependencyObjectByStamp(dependency.getAssociatedAnalysis(), i);
+//				if(fileDTO == null){
+//					
+//				} else {
+//					long fileID = fileDTO.getFile().getId();
+//					writer.append(fileID+" ");					
+//				}
 //			}
 //			writer.append('\n');
 //
-//			for (int i = 0; i < matrix.getMatrix().length; i++) {
-//				long fileID =  new MatrixFilePositionDAO().findFileFromPosition(i, matrix.getAssociatedAnalysis()).getId();;
-//				writer.append(fileID+" ");
-//				for (int j = 0; j < matrix.getMatrix()[0].length; j++) {
-//					writer.append(matrix.get(i,j)+" ");
+//			System.out.println("label section finished");
+//			
+//			for (int i = 0; i < matrix.getRows(); i++) {
+//				FileDependencyObject fileDTO = new FileDependencyObjectDAO().findDependencyObjectByStamp(dependency.getAssociatedAnalysis(), i);
+//				if(fileDTO == null){
+//					
+//				} else {
+//					long fileID = fileDTO.getFile().getId();
+//					writer.append(fileID+" ");
+//					for (int j = 0; j < matrix.getColumns(); j++) {
+//						writer.append(matrix.get(i,j)+" ");
+//					}
+//					writer.append('\n');
 //				}
-//				writer.append('\n');
+//
 //			}
 //		}
 //		

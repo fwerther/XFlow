@@ -2,7 +2,10 @@ package br.ufpa.linc.xflow.data.entities;
 
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -10,30 +13,25 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 @Entity(name="dependency")
 @Inheritance(strategy=InheritanceType.JOINED)
-public class Dependency {
+@DiscriminatorColumn(name="OBJECT_TYPE", discriminatorType=DiscriminatorType.INTEGER)
+public abstract class Dependency<Dependable extends DependencyObject, Dependents extends DependencyObject> {
 
-	final public static int FILE_FILE_DEPENDENCY = 1;
-	final public static int AUTHOR_FILE_DEPENDENCY = 2;
-	final public static int AUTHOR_AUTHOR_DEPENDENCY = 3;
+	public final static int TASK_DEPENDENCY = 0;
+	public final static int TASK_ASSIGNMENT = 1;
+	public final static int COORD_REQUIREMENTS = 2;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(name = "DEPENDENCY_ID")
 	private long id;
 
-	@ManyToMany
-    @JoinTable(
-            name="dependency_dependency_object",
-            joinColumns = @JoinColumn( name="DEPENDENCY_ID"),
-            inverseJoinColumns = @JoinColumn( name="DEPENDENCY_OBJECT_ID")
-    )
-	private Set<DependencyObject> dependencies;
+	@OneToMany(cascade = CascadeType.ALL, mappedBy = "associatedDependency", targetEntity = DependencySet.class)
+	private Set<DependencySet<Dependable, Dependents>> dependencies;
 	
 	@OneToOne
 	@JoinColumn(name = "ENTRY_ID", nullable = false)
@@ -53,12 +51,12 @@ public class Dependency {
 		return id;
 	}
 
-	public Set<DependencyObject> getDependencies() {
-		return dependencies;
+	public void setDependencies(Set<DependencySet<Dependable, Dependents>> dependencies) {
+		this.dependencies = dependencies;
 	}
 
-	public void setDependencies(final Set<DependencyObject> dependencies) {
-		this.dependencies = dependencies;
+	public Set<DependencySet<Dependable, Dependents>> getDependencies() {
+		return dependencies;
 	}
 
 	public Entry getAssociatedEntry() {

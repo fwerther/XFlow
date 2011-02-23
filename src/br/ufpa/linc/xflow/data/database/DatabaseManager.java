@@ -42,14 +42,18 @@ import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
+import br.ufpa.linc.xflow.data.entities.CoordinationRequirements;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
+import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Folder;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.data.entities.Resource;
+import br.ufpa.linc.xflow.data.entities.TaskAssignment;
 import br.ufpa.linc.xflow.data.entities.TaskDependency;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricValues;
@@ -66,9 +70,10 @@ public class DatabaseManager {
 	
 	private final Class<?>[] CLAZZS = new Class<?>[]{Project.class, Dependency.class,
 			Author.class, Entry.class, Folder.class, ObjFile.class, Resource.class, 
-			Analysis.class, CoChangesAnalysis.class, EntryMetricValues.class, 
+			Analysis.class, CoChangesAnalysis.class, EntryMetricValues.class, Metrics.class,
 			ProjectMetricValues.class, FileMetricValues.class, DependencyObject.class, 
-			FileDependencyObject.class, AuthorDependencyObject.class, TaskDependency.class
+			FileDependencyObject.class, AuthorDependencyObject.class, TaskDependency.class,
+			TaskAssignment.class, CoordinationRequirements.class, DependencySet.class			
 	};
 //	
 //	private void loadProperties() throws DatabaseException{
@@ -115,9 +120,9 @@ public class DatabaseManager {
 //		gotta remind to put your database password
 		String host = "localhost";
 		String port = "3306";
-		String DBname = "xflow";
+		String DBname = "xflow-teste";
 		String DBUser = "root";
-		String DBpassword = "";
+		String DBpassword = "123456";
 		String dialect = "br.ufpa.linc.xflow.data.database.XFlowMySqlDialect";
 		
 //		String dialect = databaseProperties.getProperty("dialect");

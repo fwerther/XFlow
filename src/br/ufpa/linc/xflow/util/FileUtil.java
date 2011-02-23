@@ -35,8 +35,8 @@ package br.ufpa.linc.xflow.util;
 
 import javax.persistence.EntityNotFoundException;
 
-import br.ufpa.linc.xflow.data.dao.FolderDAO;
-import br.ufpa.linc.xflow.data.dao.ObjFileDAO;
+import br.ufpa.linc.xflow.data.dao.cm.FolderDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Folder;
 import br.ufpa.linc.xflow.data.entities.ObjFile;

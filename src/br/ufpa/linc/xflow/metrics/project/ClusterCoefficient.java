@@ -37,14 +37,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import br.ufpa.linc.xflow.data.dao.ProjectMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGEdge;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.graph.Graph;
 
 public class ClusterCoefficient extends ProjectMetricModel {
@@ -56,7 +55,7 @@ public class ClusterCoefficient extends ProjectMetricModel {
 		}
 		else {
 			final Graph<JUNGVertex, JUNGEdge> dependencyGraph = graph.getGraph();
-			final HashMap<JUNGVertex, Double> mapClusterCoef = (HashMap<JUNGVertex, Double>) Metrics.clusteringCoefficients(dependencyGraph);
+			final HashMap<JUNGVertex, Double> mapClusterCoef = (HashMap<JUNGVertex, Double>) edu.uci.ics.jung.algorithms.metrics.Metrics.clusteringCoefficients(dependencyGraph);
 
 			double sumValues = 0;
 
@@ -83,18 +82,18 @@ public class ClusterCoefficient extends ProjectMetricModel {
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) throws DatabaseException {
-		return new ProjectMetricsDAO().getClusterCoefficientAverageValue(analysis);
+	public final double getAverageValue(final Metrics metrics) throws DatabaseException {
+		return new ProjectMetricsDAO().getClusterCoefficientAverageValue(metrics);
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) throws DatabaseException {
-		return new ProjectMetricsDAO().getClusterCoefficientDeviationValue(analysis);
+	public final double getStdDevValue(final Metrics metrics) throws DatabaseException {
+		return new ProjectMetricsDAO().getClusterCoefficientDeviationValue(metrics);
 	}
 
 	@Override
-	public double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new ProjectMetricsDAO().getClusterMetricValueByEntry(analysis, entry);
+	public double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new ProjectMetricsDAO().getClusterMetricValueByEntry(metrics, entry);
 	}
 	
 }

@@ -216,10 +216,30 @@ public class Project implements Serializable, Comparable<Project>{
 	public void setTemporalConsistencyForced(final boolean temporalConsistencyForced) {
 		this.temporalConsistencyForced = temporalConsistencyForced;
 	}
-
+	
+	public List<Author> getAuthorsListByEntries(Entry initialEntry, Entry finalEntry) {
+		final List<Author> authorsList = new ArrayList<Author>();
+		if(isTemporalConsistencyForced()){
+			for (Author author : this.getAuthors()) {
+				if((author.getEntries().get(0).getId() >= initialEntry.getId()) && (author.getEntries().get(0).getId() <= finalEntry.getId())){
+					authorsList.add(author);
+				}
+			}
+		} else {
+			for (Author author : this.getAuthors()) {
+				if((author.getEntries().get(0).getRevision() >= initialEntry.getRevision()) && (author.getEntries().get(0).getRevision() <= finalEntry.getId())){
+					authorsList.add(author);
+				}
+			}
+		}
+		
+		return authorsList;
+	}
+	
 	public Collection<String> getAuthorsStringList() {
 		final ArrayList<String> authorsList = new ArrayList<String>();
 		for (Author author : this.getAuthors()) {
+			System.out.println(author.getName());
 			authorsList.add(author.getName());	
 		}
 		
@@ -236,5 +256,6 @@ public class Project implements Serializable, Comparable<Project>{
 		}
 		return 1;
 	}
+
 
 }

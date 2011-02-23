@@ -109,12 +109,12 @@ public class SparseMatrix {
 	public SparseMatrix multiply(SparseMatrix m2){
 		SparseMatrix m1 = this;
 		
-		if (m1.isMultiplicationCompatible(m2)){
+		if (!m1.isMultiplicationCompatible(m2)){
 			throw new IllegalArgumentException(
 					"Matrices are not multiplication compatible"); 
 		}
 		
-		SparseMatrix resultMatrix = new SparseMatrix(rows,columns);
+		SparseMatrix resultMatrix = new SparseMatrix(m1.getRows(), m2.getColumns());
 		for (int i = 0; i < m1.rows; i++) {
 			for (int j = 0; j < m2.columns; j++) {
 				for (int k = 0; k < m1.columns; k++) {

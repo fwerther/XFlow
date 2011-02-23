@@ -35,9 +35,9 @@ package br.ufpa.linc.xflow.metrics.entry;
 
 import java.util.ArrayList;
 
-import br.ufpa.linc.xflow.data.dao.EntryMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.EntryMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.MetricModel;
 
@@ -45,13 +45,12 @@ public abstract class EntryMetricModel implements MetricModel {
 
 	abstract public void evaluate(Entry entry, EntryMetricValues table) throws DatabaseException;
 	
-	@Override
-	public final EntryMetricValues getMetricTable(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new EntryMetricsDAO().findEntryMetricValuesByEntry(analysis, entry);
+	public final EntryMetricValues getMetricTable(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new EntryMetricsDAO().findEntryMetricValuesByEntry(metrics, entry);
 	}
 
 	@Override
-	public final ArrayList<EntryMetricValues> getAllMetricsTables(final Analysis analysis) throws DatabaseException {
-		return new EntryMetricsDAO().getEntryMetricValues(analysis);
+	public final ArrayList<EntryMetricValues> getAllMetricsTables(final Metrics metrics) throws DatabaseException {
+		return new EntryMetricsDAO().getEntryMetricValues(metrics);
 	}
 }

@@ -33,9 +33,9 @@
 
 package br.ufpa.linc.xflow.metrics.file;
 
-import br.ufpa.linc.xflow.data.dao.ObjFileDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
@@ -54,17 +54,17 @@ public final class LOC extends FileMetricModel {
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) {
+	public final double getAverageValue(final Metrics metrics) {
 		return 0;
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) {
+	public final double getStdDevValue(final Metrics metrics) {
 		return 0;
 	}
 
 	@Override
-	public final double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
+	public final double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
 		// TODO ??? o que fazer?? Maior? média?
 		return 0;
 	}

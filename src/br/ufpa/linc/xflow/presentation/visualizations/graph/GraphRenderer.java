@@ -36,7 +36,6 @@ package br.ufpa.linc.xflow.presentation.visualizations.graph;
 import java.awt.BorderLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.List;
 
 import javax.swing.JPanel;
 
@@ -59,14 +58,15 @@ import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
 import prefuse.util.ColorLib;
 import prefuse.visual.VisualItem;
-import br.ufpa.linc.xflow.data.dao.AuthorDependencyObjectDAO;
-import br.ufpa.linc.xflow.data.dao.DependencyDAO;
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
+import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.representation.Converter;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
+import br.ufpa.linc.xflow.data.representation.matrix.Matrix;
 import br.ufpa.linc.xflow.data.representation.prefuse.PrefuseGraph;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
@@ -75,21 +75,25 @@ public class GraphRenderer {
 
 	private Display display;
 	private PrefuseGraph graph;
-	
+
+	@SuppressWarnings("unchecked")
 	public GraphRenderer() throws DatabaseException{
 		
-		final Dependency dependency;
-		final Entry entry = new EntryDAO().findEntryFromSequence(AbstractVisualization.getCurrentAnalysis().getProject(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getId());
+		final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependency = new DependencyDAO().findHighestDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getId(), Dependency.COORD_REQUIREMENTS);
 		final JUNGGraph newGraph;
 		
 		if(AbstractVisualization.getCurrentAnalysis().isCoordinationRequirementPersisted()){
-			dependency = new DependencyDAO().findDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), entry.getId(), Dependency.AUTHOR_AUTHOR_DEPENDENCY);
-			List<AuthorDependencyObject> authorDependencies = new AuthorDependencyObjectDAO().findDependencyObjsByDependency(dependency);
-			newGraph = Converter.convertDependenciesToJUNGGraph(authorDependencies, dependency.isDirectedDependency());
+			Matrix m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processDependencyMatrix(dependency);
+			newGraph = JUNGGraph.convertMatrixToJUNGGraph(m, dependency);
+//			List<AuthorDependencyObject> authorDependencies = new AuthorDependencyObjectDAO().findDependencyObjsByDependency(dependency);
+//			newGraph = Converter.convertDependenciesToJUNGGraph(new ArrayList<DependencyObject>(dependency.getDependencies()), dependency.isDirectedDependency());
+//			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
 		} else{
-			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
+//			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
+			newGraph = null;
 		}
 		
+		this.graph = new PrefuseGraph();
 		Converter.convertJungToPrefuseGraph(newGraph, this.graph);
 	}
 
@@ -280,7 +284,6 @@ public class GraphRenderer {
 	public void updateGraph(long newSequence) throws DatabaseException {
 		this.getDisplay().getVisualization().reset();
 
-		final Dependency dependency;
 		final JUNGGraph newGraph;
 		final Entry entry;
 		
@@ -289,17 +292,23 @@ public class GraphRenderer {
 		} else {
 			entry = new EntryDAO().findEntryFromRevision(AbstractVisualization.getCurrentAnalysis().getProject(), newSequence);
 		}
-		
+
+		final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependency = new DependencyDAO().findHighestDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), entry.getId(), Dependency.COORD_REQUIREMENTS);
 		if(AbstractVisualization.getCurrentAnalysis().isCoordinationRequirementPersisted()){
-			dependency = new DependencyDAO().findDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), entry.getId(), Dependency.AUTHOR_AUTHOR_DEPENDENCY);
-			List<AuthorDependencyObject> authorDependencies = new AuthorDependencyObjectDAO().findDependencyObjsByDependency(dependency);
-			newGraph = Converter.convertDependenciesToJUNGGraph(authorDependencies, dependency.isDirectedDependency());
+			Matrix m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processDependencyMatrix(dependency);
+			newGraph = JUNGGraph.convertMatrixToJUNGGraph(m, dependency);
 		} else{
-			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
+			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.COORD_REQUIREMENTS);
 		}
 		
+		for (br.ufpa.linc.xflow.data.representation.jung.JUNGVertex vertex : newGraph.getGraph().getVertices()) {
+			System.out.println(vertex.getName());
+		}
+		
+		this.graph = new PrefuseGraph();
 		Converter.convertJungToPrefuseGraph(newGraph, this.graph);
 		this.getDisplay().getVisualization().addGraph("graph", this.graph.getPrefuseGraph());
 		this.getDisplay().getVisualization().run("draw");
+		this.getDisplay().getVisualization().run("layout");
 	}
 }

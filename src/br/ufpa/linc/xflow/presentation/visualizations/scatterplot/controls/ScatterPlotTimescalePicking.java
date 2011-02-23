@@ -64,7 +64,7 @@ public class ScatterPlotTimescalePicking implements ScatterPlotViewController, A
 	}
 
 	private JComboBox createMetricsComboBox() {
-		String[] options = new String[]{"Revision Number", "Sequence Number"};
+		String[] options = new String[]{"Revision Number", "Commit Sequence", "Author Sequence Number"};
 		JComboBox metricPickerComboBox = new JComboBox(options);
 		return metricPickerComboBox;
 	}

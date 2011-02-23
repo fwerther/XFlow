@@ -43,6 +43,7 @@ import javax.persistence.OneToOne;
 
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 
 @MappedSuperclass
 public abstract class MetricValuesTable {
@@ -57,8 +58,8 @@ public abstract class MetricValuesTable {
 	private Entry entry;
 	
 	@OneToOne
-	@JoinColumn(name = "METRICS_ANALYSIS")
-	private Analysis associatedAnalysis;
+	@JoinColumn(name = "METRICS_SESSION")
+	private Metrics associatedMetricsObject;
 
 	public long getId() {
 		return id;
@@ -76,11 +77,14 @@ public abstract class MetricValuesTable {
 		this.entry = entry;
 	}
 
-	public Analysis getAssociatedAnalysis() {
-		return associatedAnalysis;
+	public Metrics getAssociatedMetricsObject() {
+		return associatedMetricsObject;
 	}
 
-	public void setAssociatedAnalysis(final Analysis associatedAnalysis) {
-		this.associatedAnalysis = associatedAnalysis;
+	public void setAssociatedMetricsObject(final Metrics associatedMetricsObject) {
+		this.associatedMetricsObject = associatedMetricsObject;
 	}
+	
+	abstract public double getValueByName(String metricName);
+	
 }

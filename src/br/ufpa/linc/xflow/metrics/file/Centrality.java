@@ -33,9 +33,9 @@
 
 package br.ufpa.linc.xflow.metrics.file;
 
-import br.ufpa.linc.xflow.data.dao.FileMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.FileMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
@@ -68,18 +68,18 @@ public class Centrality extends FileMetricModel {
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) throws DatabaseException {
-		return new FileMetricsDAO().getCentralityAverageValue(analysis);
+	public final double getAverageValue(final Metrics metrics) throws DatabaseException {
+		return new FileMetricsDAO().getCentralityAverageValue(metrics);
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) throws DatabaseException {
-		return new FileMetricsDAO().getCentralityDeviationValue(analysis);
+	public final double getStdDevValue(final Metrics metrics) throws DatabaseException {
+		return new FileMetricsDAO().getCentralityDeviationValue(metrics);
 	}
 
 	@Override
-	public final double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new FileMetricsDAO().getCentralityValueByEntry(analysis, entry);
+	public final double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new FileMetricsDAO().getCentralityValueByEntry(metrics, entry);
 	}
 	
 }

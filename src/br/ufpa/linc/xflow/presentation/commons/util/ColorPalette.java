@@ -85,10 +85,10 @@ public class ColorPalette {
 		}
 		else {
 			int colorsNeededFactor = (int) Math.ceil((double) size / authorsColorPalette.length);
-			
+			System.out.println(colorsNeededFactor);
 			int[] colorsArray = new int[colorsNeededFactor*authorsColorPalette.length];
 			System.arraycopy(authorsColorPalette, 0, colorsArray, 0, authorsColorPalette.length);
-			for (int i = 2; i < colorsNeededFactor; i++) {
+			for (int i = 1; i < colorsNeededFactor; i++) {
 				System.arraycopy(authorsColorPalette, 0, colorsArray, authorsColorPalette.length*i, authorsColorPalette.length);
 			}
 			authorsColorPalette = colorsArray;

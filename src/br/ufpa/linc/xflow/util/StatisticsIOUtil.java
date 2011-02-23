@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
-import br.ufpa.linc.xflow.data.dao.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
@@ -26,7 +26,7 @@ public class StatisticsIOUtil {
 //			else{
 //				filesModificatedPerEntryMap.put(entry.getEntryFiles().size(), 1);
 //			}
-			writer.append("\""+entry.getEntryFiles().size()+"\"\r\n");
+//			writer.append("\""+entry.getEntryFiles().size()+"\"\r\n");
 		}
 		
 
@@ -41,7 +41,7 @@ public class StatisticsIOUtil {
 	}
 	
 	public static void main(String[] args) throws DatabaseException, IOException {
-		Project p = new ProjectDAO().findById(Project.class, 6L);
-		StatisticsIOUtil.createFileModificationHistogram(p, "D:\\xflow\\teste\\histogram\\pmd-histogram-data.csv");
+		Project p = new ProjectDAO().findById(Project.class, 5L);
+		StatisticsIOUtil.createFileModificationHistogram(p, "D:\\xflow\\teste\\histogram\\megamek-histogram-data.csv");
 	}
 }

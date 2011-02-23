@@ -102,7 +102,7 @@ public class EntryMetricValues extends MetricValuesTable {
 		this.author = author;
 	}
 
-	public int getValueByName(final String metricName) {
+	public double getValueByName(final String metricName) {
 		if(metricName == "Added Files"){
 			return this.getEntryAddedFiles();
 		}

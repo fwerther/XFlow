@@ -48,6 +48,9 @@ public class FileMetricValues extends MetricValuesTable {
 	@Column(name = "BETWEENNESS")
 	private double betweennessCentrality;
 	
+	@Column(name = "NORMALIZED_BETWEENNESS")
+	private double normalizedBetweennessCentrality;
+	
 	@Column(name = "LOC")
 	private int LOC;
 	
@@ -79,11 +82,31 @@ public class FileMetricValues extends MetricValuesTable {
 		this.betweennessCentrality = betweennessCentrality;
 	}
 	
+	public double getNormalizedBetweennessCentrality() {
+		return normalizedBetweennessCentrality;
+	}
+
+	public void setNormalizedBetweennessCentrality(
+			double normalizedBetweennessCentrality) {
+		this.normalizedBetweennessCentrality = normalizedBetweennessCentrality;
+	}
+
 	public int getLOC() {
 		return LOC;
 	}
 	
 	public void setLOC(int lOC) {
 		LOC = lOC;
+	}
+
+	@Override
+	public double getValueByName(String metricName) {
+		if(metricName == "Centrality"){
+			return this.centrality;
+		}
+		else if(metricName == "Betweenness Centrality"){
+			return this.betweennessCentrality;
+		}
+		return 0;
 	}
 }

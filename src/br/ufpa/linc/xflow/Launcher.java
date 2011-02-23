@@ -41,8 +41,8 @@ import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
 import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
 import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
-import br.ufpa.linc.xflow.data.dao.AnalysisDAO;
-import br.ufpa.linc.xflow.data.dao.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
@@ -184,7 +184,7 @@ public class Launcher {
 //		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
 		Project p = null;
 //		try {
-//			p = a.startNewProject("jRate", "anonymous", "anonymous", "https://jrate.svn.sourceforge.net/svnroot/jrate", AccessFactory.SVN_REPOSITORY, "", false, false);
+//			p = a.startNewProject("jEdit - Trunk only", "anonymous", "anonymous", "https://jedit.svn.sourceforge.net/svnroot/jedit", AccessFactory.SVN_REPOSITORY, "Only trunk AND java, html, h, c or cpp files considered!", false, true);
 //		} catch (ProjectNameAlreadyExistsException e) {
 //			e.printStackTrace();
 //		} catch (DatabaseException e) {
@@ -192,7 +192,7 @@ public class Launcher {
 //		}
 //		
 //		try {
-//			a.downloadProjectData(p, 1, 100, new Filter(".*?"));
+//			a.downloadProjectData(p, 1, 40, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
 //		} catch (CMException e1) {
 //			e1.printStackTrace();
 //		} catch (DatabaseException e1) {
@@ -211,21 +211,20 @@ public class Launcher {
 //		}
 //		
 		try {
-			p = new ProjectDAO().findById(Project.class, 6L);
+			p = new ProjectDAO().findById(Project.class, 1L);
 		} catch (DatabaseException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
 		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
-		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "", true);
+		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "JEdit 4k commits analysis", true);
 		try {
-			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, 1, p.getLastRevision(), 0, 0, 27, false);
-			a.processProject(analysis, new Filter(".*?"));
+			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, p.getFirstRevision(), 4000, 0, 0, 30, true);
+			a.processProject(analysis, new Filter(".*?\\.(java|c|cpp|h|html|jj)"));
 		} catch (DatabaseException e) {
 			e.printStackTrace();
 		} catch (AnalysisRangeException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 //		
@@ -244,13 +243,18 @@ public class Launcher {
 //		
 //		//XXX: CÓDIGO PARA CALCULDO DAS MÉTRICAS
 //		try {
-//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 1L), projectMetrics, entryMetrics, fileMetrics);
+//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 3L), projectMetrics, entryMetrics, fileMetrics);
 //		} catch (DatabaseException e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
 //		
 //		//XXX: CÓDIGO PARA GERAR VISUALIZAÇÕES
-//		a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
+//		try {
+//			a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
+//		} catch (DatabaseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 }

@@ -33,9 +33,9 @@
 
 package br.ufpa.linc.xflow.metrics.file;
 
-import br.ufpa.linc.xflow.data.dao.FileMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.metrics.FileMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGEdge;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
@@ -65,27 +65,30 @@ public class Betweenness extends FileMetricModel {
 			}
 		}
 
-		final double betweenness = ranker.getVertexRankScore(vertex);
+		double betweenness = ranker.getVertexRankScore(vertex);
 		table.setBetweennessCentrality(betweenness);
+		betweenness = betweenness / (((dependencyGraph.getVertexCount() - 1) * (dependencyGraph.getVertexCount() - 2))/2);
+		betweenness = (Double.valueOf(betweenness).isNaN() ? 0 : betweenness);
+		table.setNormalizedBetweennessCentrality(betweenness);
 	}
 
 	@Override
 	public final String getMetricName() {
-		return "Betweenness centrality";
+		return "Betweenness Centrality";
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) throws DatabaseException {
-		return new FileMetricsDAO().getBetweennessAverageValue(analysis);
+	public final double getAverageValue(final Metrics metrics) throws DatabaseException {
+		return new FileMetricsDAO().getBetweennessAverageValue(metrics);
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) throws DatabaseException {
-		return new FileMetricsDAO().getBetweennessDeviationValue(analysis);
+	public final double getStdDevValue(final Metrics metrics) throws DatabaseException {
+		return new FileMetricsDAO().getBetweennessDeviationValue(metrics);
 	}
 
 	@Override
-	public final double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new FileMetricsDAO().getBetweennessValueByEntry(analysis, entry);
+	public final double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new FileMetricsDAO().getBetweennessValueByEntry(metrics, entry);
 	}
 }

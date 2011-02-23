@@ -65,7 +65,7 @@ public class Matrix {
 	}
 
 	public Matrix multiply(Matrix anotherMatrix) {
-		SparseMatrix m1 = sparseMatrix;
+		SparseMatrix m1 = this.sparseMatrix;
 		SparseMatrix m2 = anotherMatrix.getSparseMatrix();
 		
 		Matrix resultMatrix = new Matrix(m1.multiply(m2));

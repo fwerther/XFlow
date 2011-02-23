@@ -33,10 +33,10 @@
 
 package br.ufpa.linc.xflow.metrics.entry;
 
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
-import br.ufpa.linc.xflow.data.dao.EntryMetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.metrics.EntryMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Entry;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
 
@@ -53,17 +53,17 @@ public final class AddedFiles extends EntryMetricModel {
 	}
 
 	@Override
-	public final double getAverageValue(final Analysis analysis) throws DatabaseException {
-		return new EntryMetricsDAO().getAddedFilesAverageValue(analysis);
+	public final double getAverageValue(final Metrics metrics) throws DatabaseException {
+		return new EntryMetricsDAO().getAddedFilesAverageValue(metrics);
 	}
 	
 	@Override
-	public final double getStdDevValue(final Analysis analysis) throws DatabaseException {
-		return new EntryMetricsDAO().getAddedFilesDeviationValue(analysis);
+	public final double getStdDevValue(final Metrics metrics) throws DatabaseException {
+		return new EntryMetricsDAO().getAddedFilesDeviationValue(metrics);
 	}
 
 	@Override
-	public final double getMetricValue(final Analysis analysis, final Entry entry) throws DatabaseException {
-		return new EntryMetricsDAO().getAddedFilesValueByEntry(analysis, entry);
+	public final double getMetricValue(final Metrics metrics, final Entry entry) throws DatabaseException {
+		return new EntryMetricsDAO().getAddedFilesValueByEntry(metrics, entry);
 	}
 }

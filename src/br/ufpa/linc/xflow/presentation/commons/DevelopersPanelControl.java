@@ -37,7 +37,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -52,6 +53,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import prefuse.util.ui.JToggleGroup;
+import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.presentation.commons.util.ColorPalette;
@@ -70,9 +72,13 @@ public class DevelopersPanelControl {
 
 	private String selectedAuthorsQuery; 
 
-	public DevelopersPanelControl(Collection<String> items) {
-		this.developersList = items.toArray(new String[]{});
-		this.checkBoxList = new JToggleGroup(JToggleGroup.CHECKBOX, items.toArray(new String[]{}), ColorPalette.getAuthorsColorPalette());
+	public DevelopersPanelControl(List<Author> validAuthors) {
+		List<String> validAuthorsNames = new ArrayList<String>();
+		for (Author author : validAuthors) {
+			validAuthorsNames.add(author.getName());
+		}
+		this.developersList = validAuthorsNames.toArray(new String[]{});
+		this.checkBoxList = new JToggleGroup(JToggleGroup.CHECKBOX, developersList, ColorPalette.getAuthorsColorPalette());
 		this.checkBoxList.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
 
 			@Override
@@ -81,6 +87,7 @@ public class DevelopersPanelControl {
 				StringBuffer authorNames = new StringBuffer();
 				for ( int i=0; i<checkBoxList.getModel().getSize(); ++i ) {
 					if(checkBoxList.getSelectionModel().isSelectedIndex(i)){
+						System.out.println(((JCheckBox)checkBoxList.getComponent(i)).getText());
 						JCheckBox selectedComponent = (JCheckBox)checkBoxList.getComponent(i);
 						authorNames.append(selectedComponent.getText());
 						authorNames.append(" | ");
@@ -89,6 +96,9 @@ public class DevelopersPanelControl {
 				selectedAuthorsQuery = new String(authorNames);
 
 				if(Visualizer.getScatterPlotView() != null){
+					if(selectedAuthorsQuery.isEmpty()){
+						selectedAuthorsQuery = "\\u0";
+					}
 					Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
 				}
 
@@ -100,10 +110,11 @@ public class DevelopersPanelControl {
 					}
 				}
 
-				if(Visualizer.getActivityView() != null)
+				if(Visualizer.getActivityView() != null){
 					Visualizer.getActivityView().getBarChartRenderer().updateSeriesVisibility(selectedAuthorsQuery);
 					Visualizer.getActivityView().getStackedAreaRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
 				}
+			}
 		});
 	}
 

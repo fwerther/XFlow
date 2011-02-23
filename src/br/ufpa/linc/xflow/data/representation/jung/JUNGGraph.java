@@ -35,8 +35,8 @@ package br.ufpa.linc.xflow.data.representation.jung;
 
 import java.util.HashMap;
 
-import br.ufpa.linc.xflow.data.dao.AuthorDependencyObjectDAO;
-import br.ufpa.linc.xflow.data.dao.FileDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Dependency;
@@ -52,6 +52,7 @@ public class JUNGGraph {
 	private AbstractTypedGraph<JUNGVertex, JUNGEdge> graph;
 	
 	private static HashMap<Long, JUNGVertex> verticesCache;
+	private static HashMap<Integer, FileDependencyObject> stampsCache;
 	
 	public JUNGGraph(){
 		this.graph = new UndirectedSparseGraph<JUNGVertex, JUNGEdge>();
@@ -74,10 +75,10 @@ public class JUNGGraph {
 		final AbstractTypedGraph<JUNGVertex,JUNGEdge> graph;
 		
 		if(dependency.isDirectedDependency()){
-			if(dependency.getType() == Dependency.AUTHOR_AUTHOR_DEPENDENCY){
+			if(dependency.getType() == Dependency.COORD_REQUIREMENTS){
 				graph = transformCoordinationRequirementMatrixToDirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
-			else if(dependency.getType() == Dependency.AUTHOR_FILE_DEPENDENCY){
+			else if(dependency.getType() == Dependency.TASK_ASSIGNMENT){
 				graph = transformTaskAssignmentMatrixToDirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
 			else {
@@ -85,10 +86,10 @@ public class JUNGGraph {
 			}
 		}
 		else{
-			if(dependency.getType() == Dependency.AUTHOR_AUTHOR_DEPENDENCY){
+			if(dependency.getType() == Dependency.COORD_REQUIREMENTS){
 				graph = transformCoordinationRequirementMatrixToUndirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
-			else if(dependency.getType() == Dependency.AUTHOR_FILE_DEPENDENCY){
+			else if(dependency.getType() == Dependency.TASK_ASSIGNMENT){
 				graph = transformTaskAssignmentMatrixToUndirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
 			else {
@@ -99,6 +100,23 @@ public class JUNGGraph {
 		final JUNGGraph jungGraph = new JUNGGraph();
 		jungGraph.setGraph(graph);
 		return jungGraph;
+	}
+	
+	public static JUNGGraph convertMatrixToJUNGGraph(final Matrix matrix, final Dependency dependency, final JUNGGraph graph) throws DatabaseException{
+		
+		if(dependency.isDirectedDependency()){
+		}
+		else{
+			if(dependency.getType() == Dependency.COORD_REQUIREMENTS){
+			}
+			else if(dependency.getType() == Dependency.TASK_ASSIGNMENT){
+			}
+			else {
+				transformTaskDependencyToUndirectedGraph(matrix, dependency.getAssociatedAnalysis(), graph);
+			}
+		}
+		
+		return graph;
 	}
 	
 	private static AbstractTypedGraph<JUNGVertex, JUNGEdge> transformCoordinationRequirementMatrixToDirectedGraph(Matrix matrix, Analysis associatedAnalysis) {
@@ -114,25 +132,40 @@ public class JUNGGraph {
 	}
 
 	private final static AbstractTypedGraph<JUNGVertex, JUNGEdge> transformCoordinationRequirementMatrixToUndirectedGraph(final Matrix matrix, final Analysis associatedAnalysis) throws DatabaseException {
-		
-		final AuthorDependencyObjectDAO authorDependencyDAO = new AuthorDependencyObjectDAO();
+		final AuthorDependencyObjectDAO fileDependencyDAO = new AuthorDependencyObjectDAO();
 		final UndirectedSparseGraph<JUNGVertex, JUNGEdge> graph = new UndirectedSparseGraph<JUNGVertex, JUNGEdge>();
 		
+		if(verticesCache == null){
+			verticesCache = new HashMap<Long, JUNGVertex>();
+		}
+		
 		for (int i = 0; i < matrix.getRows(); i++) {
-			final AuthorDependencyObject dependedAuthor = authorDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
-			final JUNGVertex vertex1 = new JUNGVertex();
-			vertex1.setId(dependedAuthor.getId());
-			vertex1.setName(dependedAuthor.getDependencyObjectName());
-			graph.addVertex(vertex1);
+			final AuthorDependencyObject dependedFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
+			final JUNGVertex vertex1;
+			if(verticesCache.containsKey(dependedFile.getAuthor().getId())){
+				vertex1 = verticesCache.get(dependedFile.getAuthor().getId());
+			} else {
+				vertex1 = new JUNGVertex();
+				vertex1.setId(dependedFile.getAuthor().getId());
+				vertex1.setName(dependedFile.getDependencyObjectName());
+				verticesCache.put(dependedFile.getAuthor().getId(), vertex1);
+				graph.addVertex(vertex1);
+			}
 			for (int j = i+1; j < matrix.getColumns(); j++) {
-				final int edgeWeight = matrix.get(i, j);
+				final int edgeWeight = matrix.get(i,j);
 				if(edgeWeight > 0){
-					final AuthorDependencyObject dependentAuthor = authorDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
+					final AuthorDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
 					final JUNGEdge edge = new JUNGEdge(edgeWeight);
-					final JUNGVertex vertex2 = new JUNGVertex();
-					vertex2.setId(dependentAuthor.getId());
-					vertex2.setName(dependentAuthor.getDependencyObjectName());
-					graph.addVertex(vertex2);
+					final JUNGVertex vertex2;
+					if(verticesCache.containsKey(dependentFile.getAuthor().getId())){
+						vertex2 = verticesCache.get(dependentFile.getAuthor().getId());
+					} else {
+						vertex2 = new JUNGVertex();
+						vertex2.setId(dependentFile.getAuthor().getId());
+						vertex2.setName(dependentFile.getDependencyObjectName());
+						verticesCache.put(dependentFile.getAuthor().getId(), vertex2);
+						graph.addVertex(vertex2);
+					}
 					graph.addEdge(edge, vertex1, vertex2);
 				}
 			}
@@ -206,9 +239,59 @@ public class JUNGGraph {
 		}
 		return graph;
 	}
+	
+	private static void transformTaskDependencyToUndirectedGraph(final Matrix matrix, final Analysis associatedAnalysis, JUNGGraph graph) throws DatabaseException {
+		
+		final FileDependencyObjectDAO fileDependencyDAO = new FileDependencyObjectDAO();
+		final UndirectedSparseGraph<JUNGVertex, JUNGEdge> dependencyGraph = (UndirectedSparseGraph<JUNGVertex, JUNGEdge>) graph.getGraph();
+		
+		for (int i = 0; i < matrix.getRows(); i++) {
+			final FileDependencyObject dependedFile;
+			if(stampsCache.containsKey(i)){
+				dependedFile = stampsCache.get(i);
+			} else {
+				dependedFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
+				stampsCache.put(i, dependedFile);
+			}
+
+			if(dependedFile != null){
+				final JUNGVertex vertex1;
+				if(verticesCache.containsKey(dependedFile.getFile().getId())){
+					vertex1 = verticesCache.get(dependedFile.getFile().getId());
+				} else {
+					vertex1 = new JUNGVertex();
+					vertex1.setId(dependedFile.getFile().getId());
+					vertex1.setName(dependedFile.getDependencyObjectName());
+					verticesCache.put(dependedFile.getFile().getId(), vertex1);
+					dependencyGraph.addVertex(vertex1);
+				}
+				for (int j = i+1; j < matrix.getColumns(); j++) {
+					final int edgeWeight = matrix.get(i,j);
+					if(edgeWeight > 0){
+						final FileDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
+						final JUNGEdge edge = new JUNGEdge(edgeWeight);
+						final JUNGVertex vertex2;
+						if(verticesCache.containsKey(dependentFile.getFile().getId())){
+							vertex2 = verticesCache.get(dependentFile.getFile().getId());
+						} else {
+							vertex2 = new JUNGVertex();
+							vertex2.setId(dependentFile.getFile().getId());
+							vertex2.setName(dependentFile.getDependencyObjectName());
+							verticesCache.put(dependentFile.getFile().getId(), vertex2);
+							dependencyGraph.addVertex(vertex2);
+						}
+						dependencyGraph.addEdge(edge, vertex1, vertex2);
+					}
+				}
+			}
+		}
+
+		graph.setGraph(dependencyGraph);
+	}
 
 	public static void clearVerticesCache() {
 		verticesCache = new HashMap<Long, JUNGVertex>();
+		stampsCache = new HashMap<Integer, FileDependencyObject>();
 	}	
 
 }

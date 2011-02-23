@@ -34,7 +34,7 @@
 package br.ufpa.linc.xflow.cm.transformations.loc;
 
 import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
-import br.ufpa.linc.xflow.data.dao.ObjFileDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 

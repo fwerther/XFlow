@@ -101,18 +101,6 @@ public abstract class Analysis {
 	@JoinColumn(name = "ANALYSIS_PROJECT", nullable = false)
 	private Project project;
 
-	@Column(name = "FILE_METRICS")
-	@OneToMany(mappedBy = "associatedAnalysis", cascade = CascadeType.ALL)
-	private List<FileMetricValues> fileMetrics;
-
-	@Column(name = "ENTRY_METRICS")
-	@OneToMany(mappedBy = "associatedAnalysis", cascade = CascadeType.ALL)
-	private List<EntryMetricValues> entryMetrics;
-
-	@Column(name = "PROJECT_METRICS")
-	@OneToMany(mappedBy = "associatedAnalysis", cascade = CascadeType.ALL)
-	private List<ProjectMetricValues> projectMetrics;
-	
 	@Column(name = "TEMPORAL_CONSISTENCY_FORCED", nullable = false)
 	private boolean temporalConsistencyForced = false;
 
@@ -198,30 +186,6 @@ public abstract class Analysis {
 		return project;
 	}
 
-	public List<FileMetricValues> getFileMetrics() {
-		return fileMetrics;
-	}
-
-	public void setFileMetrics(final List<FileMetricValues> fileMetrics) {
-		this.fileMetrics = fileMetrics;
-	}
-
-	public List<EntryMetricValues> getEntryMetrics() {
-		return entryMetrics;
-	}
-
-	public void setEntryMetrics(final List<EntryMetricValues> entryMetrics) {
-		this.entryMetrics = entryMetrics;
-	}
-
-	public List<ProjectMetricValues> getProjectMetrics() {
-		return projectMetrics;
-	}
-
-	public void setProjectMetrics(final List<ProjectMetricValues> projectMetrics) {
-		this.projectMetrics = projectMetrics;
-	}
-
 	public boolean isTemporalConsistencyForced() {
 		return temporalConsistencyForced;
 	}
@@ -232,7 +196,10 @@ public abstract class Analysis {
 
 	public abstract JUNGGraph processEntryDependencyGraph(Entry entry, int dependencyType) throws DatabaseException;
 	
+	public abstract JUNGGraph processDependencyGraph(Dependency entryDependency) throws DatabaseException;
+	
 	public abstract Matrix processEntryDependencyMatrix(Entry entry, int dependencyType) throws DatabaseException;
 
 	public abstract boolean checkCutoffValues(Entry entry);
+
 }

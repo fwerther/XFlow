@@ -41,7 +41,7 @@ import br.ufpa.linc.xflow.cm.connectivity.ConnectionHandler;
 import br.ufpa.linc.xflow.cm.connectivity.SVNAccess;
 import br.ufpa.linc.xflow.cm.info.Commit;
 import br.ufpa.linc.xflow.cm.transformations.EntriesTransformer;
-import br.ufpa.linc.xflow.data.dao.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;

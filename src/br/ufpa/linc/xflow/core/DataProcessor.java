@@ -37,8 +37,8 @@ import java.util.List;
 
 import br.ufpa.linc.xflow.core.processors.DependenciesIdentifier;
 import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesCollector;
-import br.ufpa.linc.xflow.data.dao.AnalysisDAO;
-import br.ufpa.linc.xflow.data.dao.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;

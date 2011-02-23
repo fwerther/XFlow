@@ -35,6 +35,7 @@ package br.ufpa.linc.xflow.presentation.visualizations.scatterplot.controls;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -66,7 +67,12 @@ public class ScatterPlotMetricPicker implements ScatterPlotViewController, Actio
 	private JComboBox createMetricsComboBox() {
 		List<String> metricsNames = Visualizer.getAvailableProjectMetricsNames();
 		metricsNames.addAll(Visualizer.getAvailableEntryMetricsNames());
-		metricsNames.addAll(Visualizer.getAvailableFileMetricsNames());
+		final String[] metricNamesVariations = new String[]{"Higher ", "Average ", "Max "};
+		for (String string : Visualizer.getAvailableFileMetricsNames()) {
+			for (int i = 0; i < metricNamesVariations.length; i++) {
+				metricsNames.add(metricNamesVariations[i]+string);
+			}
+		}
 		
 		JComboBox metricPickerComboBox = new JComboBox((Vector<String>) metricsNames);
 		return metricPickerComboBox;

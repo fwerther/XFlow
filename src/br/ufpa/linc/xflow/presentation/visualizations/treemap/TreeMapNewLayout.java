@@ -70,8 +70,8 @@ import prefuse.visual.VisualItem;
 import prefuse.visual.VisualTree;
 import prefuse.visual.expression.InGroupPredicate;
 import prefuse.visual.sort.TreeDepthItemSorter;
-import br.ufpa.linc.xflow.data.dao.AuthorDAO;
-import br.ufpa.linc.xflow.data.dao.ObjFileDAO;
+import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.commons.util.TreeHierarchyBuilder;
@@ -93,7 +93,7 @@ public class TreeMapNewLayout {
 	private SearchQueryBinding filesSequenceListQueryBinding;
 
 	public TreeMapNewLayout() throws DatabaseException {
-		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), -1);
+		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), 1551);
 	}
 
 	public JPanel draw() {
