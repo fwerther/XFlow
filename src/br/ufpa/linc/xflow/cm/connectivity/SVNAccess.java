@@ -203,7 +203,7 @@ public class SVNAccess extends Access {
 								node.setTargetPath(entryPath.getPath());
 								node.setChangeType(entryPath.getType());
 								if (downloadFiles){
-									Filter sourceCodeFilter = new Filter("java|c|cpp|h");
+									Filter sourceCodeFilter = new Filter(".*?");
 									if(sourceCodeFilter.match(entryPath.getPath())){
 										String sourceCode;
 										String diffCode;
@@ -342,7 +342,7 @@ public class SVNAccess extends Access {
 									node.setTargetPath(entryPath.getPath());
 									node.setChangeType(entryPath.getType());
 									if (downloadFiles){
-										Filter sourceCodeFilter = new Filter("java|c|cpp|h");
+										Filter sourceCodeFilter = new Filter(".*?");
 										if(sourceCodeFilter.match(entryPath.getPath())){
 											String sourceCode;
 											String diffCode;

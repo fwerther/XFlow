@@ -56,17 +56,17 @@ public class ToolTipControl extends ControlAdapter {
 		} 
 		else {
 			
-			StringBuffer buffer = new StringBuffer();
+			StringBuilder builder = new StringBuilder();
 			
-			buffer.delete(0, buffer.length());
+			builder.delete(0, builder.length());
 			for(int i = 0; i < tooltipFields.length; i++)
 				if(item.canGetString(tooltipFields[i])){
-					if(buffer.length() > 0){
-						buffer.append("; ");
+					if(builder.length() > 0){
+						builder.append("; ");
 					}
-					buffer.append(item.getString(tooltipFields[i]));
+					builder.append(item.getString(tooltipFields[i]));
 				}
-			display.setToolTipText(buffer.toString());
+			display.setToolTipText(builder.toString());
 		}
 	}
 

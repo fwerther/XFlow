@@ -109,7 +109,14 @@ public class Visualizer {
 		metricsSession = metrics;
 		JTabbedPane visualizationsPlacer = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
 		AbstractVisualization.setCurrentAnalysis(metrics.getAssociatedAnalysis());
-		List<Author> validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByEntries(metrics.getAssociatedAnalysis().getFirstEntry(), metrics.getAssociatedAnalysis().getLastEntry());
+		
+		final List<Author> validAuthors;
+		if(metrics.getAssociatedAnalysis().isTemporalConsistencyForced()){
+			 validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByEntries(metrics.getAssociatedAnalysis().getFirstEntry(), metrics.getAssociatedAnalysis().getLastEntry());
+		} else {
+//			validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByRevisions(metrics.getAssociatedAnalysis().getFirstEntry().getRevision(), metrics.getAssociatedAnalysis().getLastEntry().getRevision());
+			validAuthors = null;
+		}
 		ColorPalette.initiateColors(validAuthors.size());
 
 		/*
@@ -277,12 +284,12 @@ public class Visualizer {
 	    }
 
 		Visualizer vis = new Visualizer();
-		vis.setEnabledVisualizations(new boolean[]{false, false, true, false, false});
+		vis.setEnabledVisualizations(new boolean[]{false, true, false, false, false});
 		
-		JFrame jframe = new JFrame();
+		JFrame jframe = new JFrame("XFlow");
 		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		try {
-			jframe.add(vis.composeVisualizationsPane(new MetricsDAO().findById(Metrics.class, 3L)));
+			jframe.add(vis.composeVisualizationsPane(new MetricsDAO().findById(Metrics.class, 2L)));
 		} catch (DatabaseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

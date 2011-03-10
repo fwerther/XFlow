@@ -56,7 +56,7 @@ public abstract class AnalysisFactory {
 		else return true;
 	}
 
-	public final static void startNewCoChangesAnalysis(final CoChangesAnalysis analysis, final Entry startEntry, final Entry finalEntry, final int supportValue, final int confidenceValue, final int maxFilesPerRevision, final boolean forceTemporalConsistency) throws DatabaseException, AnalysisRangeException {
+	public final static void startNewCoChangesAnalysis(final CoChangesAnalysis analysis, final Entry startEntry, final Entry finalEntry, final int supportValue, final int confidenceValue, final int maxFilesPerRevision, final boolean forceTemporalConsistency, final boolean persistCoordinationRequirements) throws DatabaseException, AnalysisRangeException {
 		
 		if(checkForValidInterval(startEntry, finalEntry)){
 			analysis.setConfidenceValue(confidenceValue);

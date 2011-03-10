@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -46,11 +47,18 @@ public class ReferenceValuesControl implements ScatterPlotViewController, Action
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
 		if(showReferenceValuesButton.getText().contains("Show")){
-			//TODO: Mais código aqui.
 			showReferenceValuesButton.setText("Hide");
+			String query = Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().getQuery()+" | Reference";
+			Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().setQuery(query);
 		}
 		else{
 			showReferenceValuesButton.setText("Show");
+			String query = Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().getQuery()+" | Reference";
+			int index = query.indexOf("| Reference");
+			String newQuery = query.substring(0, index);
+			newQuery += query.substring(index+12);
+			Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().setQuery(query);
+			
 		}
 	}
 

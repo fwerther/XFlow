@@ -42,7 +42,6 @@ import br.ufpa.linc.xflow.cm.connectivity.SVNAccess;
 import br.ufpa.linc.xflow.cm.info.Commit;
 import br.ufpa.linc.xflow.cm.transformations.EntriesTransformer;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
-import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
 import br.ufpa.linc.xflow.exception.cm.svn.SVNProtocolNotSupportedException;
@@ -67,29 +66,25 @@ public class DataExtractor {
 		final long revisionsInterval = 1 + endRevision - startRevision;
 
 		if(revisionsInterval < 10){
-			List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);
+			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);
 			transformer.transformData(project, dataCollected);
-			project.setLastRevision(endRevision);
-			new ProjectDAO().update(project);
+			project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 		}
 		else {
 			for (int i = 0; i < (int)(revisionsInterval/10); i++) {
 				if(!processCanceled){
-					List<Commit> dataCollected = connectionHandler.gatherData(startRevision + (i*10), startRevision + ((i+1)*10) - 1);
+					final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + (i*10), startRevision + ((i+1)*10) - 1);
 					transformer.transformData(project, dataCollected);
-					project.setLastRevision(endRevision);
-					new ProjectDAO().update(project);
-					DatabaseManager.getDatabaseSession().clear();
+					project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 				}
 			}
 			if(((revisionsInterval%10) > 0) && (!processCanceled)){
-				List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/10)*10), endRevision);
+				final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/10)*10), endRevision);
 				transformer.transformData(project, dataCollected);
-				project.setLastRevision(endRevision);
-				new ProjectDAO().update(project);
-				DatabaseManager.getDatabaseSession().clear();
+				project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 			}
 		}
+		new ProjectDAO().update(project);
 	}
 	
 	public static boolean checkForSVNDatesInconsistency(final Project project) throws DatabaseException, SVNException, SVNProtocolNotSupportedException{

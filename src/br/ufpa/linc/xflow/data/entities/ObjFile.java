@@ -33,6 +33,7 @@
 
 package br.ufpa.linc.xflow.data.entities;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
@@ -47,7 +48,7 @@ public class ObjFile extends Resource implements Comparable<ObjFile>{
 	 */
 	private static final long serialVersionUID = -9048464688545200449L;
 
-	@ManyToOne
+	@ManyToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "FILE_ENTRY", nullable = false)
 	private Entry entry;
 	

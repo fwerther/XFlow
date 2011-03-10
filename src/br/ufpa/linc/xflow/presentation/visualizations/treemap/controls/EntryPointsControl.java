@@ -1,15 +1,20 @@
 package br.ufpa.linc.xflow.presentation.visualizations.treemap.controls;
 
 import java.awt.Color;
+import java.awt.Font;
 
+import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 
+import prefuse.util.FontLib;
 import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.presentation.visualizations.treemap.JCustomSearchPanel;
+
 
 public class EntryPointsControl implements TreeMapViewController {
 
@@ -23,8 +28,9 @@ public class EntryPointsControl implements TreeMapViewController {
 		previousCommitButton = new JButton("<<");
 		currentCommitLabel = new JLabel("Commit: 0");
 		this.fileSequenceSearchPanel = Visualizer.getTreeMapView().getTreeMapNewLayout().getFilesSequenceSearchPanel();
-		fileSequenceSearchPanel.setBackground(Color.white);
-		fileSequenceSearchPanel.setForeground(Color.black);
+		this.fileSequenceSearchPanel.setBorder(BorderFactory.createEmptyBorder(5,5,4,0));
+		this.fileSequenceSearchPanel.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+		this.fileSequenceSearchPanel.setBackground(new Color(UIManager.getColor("Panel.background").getRGB()));
 	}
 
 	@Override

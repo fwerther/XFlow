@@ -93,7 +93,7 @@ public class TreeMapNewLayout {
 	private SearchQueryBinding filesSequenceListQueryBinding;
 
 	public TreeMapNewLayout() throws DatabaseException {
-		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), 1551);
+		treemap = TreeHierarchyBuilder.createTreeMapGraph(AbstractVisualization.getCurrentAnalysis(), 4000);
 	}
 
 	public JPanel draw() {
@@ -161,7 +161,7 @@ public class TreeMapNewLayout {
 		Predicate folderCheck = (Predicate)ExpressionParser.parse("type = 'folder' and childcount()>0");
 //		Predicate fileCheck = (Predicate)ExpressionParser.parse("type = 'file'");
 		visualization.setVisible("tree.edges", null, false);
-		visualization.addDecorators("folderLabel", "tree.nodes", folderCheck, createFolderLabelSchema());
+//		visualization.addDecorators("folderLabel", "tree.nodes", folderCheck, createFolderLabelSchema());
 //		visualization.addDecorators("fileLabel", "tree.nodes", fileCheck, createFileLabelSchema());
 	}
 	
@@ -259,7 +259,7 @@ public class TreeMapNewLayout {
 	
 	private ActionList createLayout(Visualization visualization) {
 		ActionList layout = new ActionList();
-		layout.add(new SquarifiedTreeMapLayout("tree", 15));
+		layout.add(new SquarifiedTreeMapLayout("tree", 3));
 		layout.add(new LabelLayout("folderLabel", nodeGap));
 		layout.add(new LabelLayout("fileLabel", nodeGap));
 		layout.add(visualization.getAction("colors"));
@@ -347,7 +347,7 @@ public class TreeMapNewLayout {
 	
 	public void mapFilesSequenceVisibility(String revision) throws DatabaseException {
 		List<String> filesChangedOnSequenceRevision = new ObjFileDAO().getFilesPathFromSequenceNumber(TreeMapView.getCurrentAnalysis().getProject(), Long.parseLong(revision));
-		StringBuffer highlightFilesQuery = new StringBuffer();
+		StringBuilder highlightFilesQuery = new StringBuilder();
 		for (String filePath : filesChangedOnSequenceRevision) {
 			highlightFilesQuery.append(filePath+" | ");
 		}

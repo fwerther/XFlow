@@ -65,11 +65,15 @@ public final class SVNDiffHandler extends DiffHandler {
 	@Override
 	public final void gatherFileChanges(ObjFile file) {
 		String[] totalCodeLines = gatherLoCChanges(file.getSourceCode(), file.getDiffCode());
-		String wholeCode = new String();
-		for (String codeLine : totalCodeLines) {
-			wholeCode = wholeCode.concat(codeLine);
+		
+		//Convert String array to String
+		StringBuilder builder = new StringBuilder();
+		for (String codeLine : totalCodeLines){
+			builder.append(codeLine);
 		}
-		totalCodeLines = null;
+		String wholeCode = builder.toString();		
+		totalCodeLines = null;		
+		
 		wholeCode = LOCProcessor.getLocCounter().removeInvalidLines(wholeCode);
 		String[] validCodeLines = wholeCode.split("\n");
 		wholeCode = null;
@@ -210,8 +214,18 @@ public final class SVNDiffHandler extends DiffHandler {
 				}
 			}
 			else{
+				int numOfMissingLines = numOfChangedLines+removedLinesCounter;
+				if(numOfMissingLines >= toReplaceLines.length-1){
+					numOfMissingLines = toReplaceLines.length-1;
+				}
+
 				for (int j = 0; j < numOfChangedLines+removedLinesCounter; j++) {
-					newCode.add(indexOfChangedLines+linesAddedIndex+j-1, toReplaceLines[j+1].concat("\n"));
+					try {
+						newCode.add(indexOfChangedLines+linesAddedIndex+j-1, toReplaceLines[j+1].concat("\n"));
+					}
+					catch(IndexOutOfBoundsException e){
+						break;
+					}
 				}
 			}
 

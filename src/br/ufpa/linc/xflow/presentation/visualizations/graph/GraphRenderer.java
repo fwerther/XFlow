@@ -36,6 +36,7 @@ package br.ufpa.linc.xflow.presentation.visualizations.graph;
 import java.awt.BorderLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.List;
 
 import javax.swing.JPanel;
 
@@ -46,7 +47,10 @@ import prefuse.action.ActionList;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.DataSizeAction;
+import prefuse.action.assignment.ShapeAction;
+import prefuse.action.layout.CircleLayout;
 import prefuse.action.layout.graph.FruchtermanReingoldLayout;
+import prefuse.action.layout.graph.RadialTreeLayout;
 import prefuse.controls.DragControl;
 import prefuse.controls.FocusControl;
 import prefuse.controls.NeighborHighlightControl;
@@ -56,6 +60,7 @@ import prefuse.render.AbstractShapeRenderer;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
 import prefuse.render.LabelRenderer;
+import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
 import prefuse.visual.VisualItem;
 import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
@@ -76,23 +81,28 @@ public class GraphRenderer {
 	private Display display;
 	private PrefuseGraph graph;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public GraphRenderer() throws DatabaseException{
-		
-		final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependency = new DependencyDAO().findHighestDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getId(), Dependency.COORD_REQUIREMENTS);
-		final JUNGGraph newGraph;
-		
-		if(AbstractVisualization.getCurrentAnalysis().isCoordinationRequirementPersisted()){
-			Matrix m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processDependencyMatrix(dependency);
-			newGraph = JUNGGraph.convertMatrixToJUNGGraph(m, dependency);
-//			List<AuthorDependencyObject> authorDependencies = new AuthorDependencyObjectDAO().findDependencyObjsByDependency(dependency);
-//			newGraph = Converter.convertDependenciesToJUNGGraph(new ArrayList<DependencyObject>(dependency.getDependencies()), dependency.isDirectedDependency());
-//			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
-		} else{
-//			newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
-			newGraph = null;
+
+		final Dependency dependency = new DependencyDAO().findHighestDependencyByEntry(AbstractVisualization.getCurrentAnalysis().getId(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getId(), Dependency.TASK_DEPENDENCY);
+		final Matrix m;
+		if(dependency.getType() == Dependency.COORD_REQUIREMENTS){
+			if(AbstractVisualization.getCurrentAnalysis().isCoordinationRequirementPersisted()){
+				m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processDependencyMatrix(dependency);
+			}
+			else {
+				m = null;
+			}
+		} else {
+			m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processHistoricalEntryDependencyMatrix(dependency);
 		}
-		
+		final JUNGGraph newGraph;
+
+		newGraph = JUNGGraph.convertMatrixToJUNGGraph(m, dependency);
+//		List<AuthorDependencyObject> authorDependencies = new AuthorDependencyObjectDAO().findDependencyObjsByDependency(dependency);
+//		newGraph = Converter.convertDependenciesToJUNGGraph(new ArrayList<DependencyObject>(dependency.getDependencies()), dependency.isDirectedDependency());
+//		newGraph = AbstractVisualization.getCurrentAnalysis().processEntryDependencyGraph(entry, Dependency.AUTHOR_AUTHOR_DEPENDENCY);
+
 		this.graph = new PrefuseGraph();
 		Converter.convertJungToPrefuseGraph(newGraph, this.graph);
 	}
@@ -213,6 +223,10 @@ public class GraphRenderer {
 		labelRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_FILL);
 		labelRenderer.setHorizontalAlignment(Constants.CENTER);
 
+		ShapeRenderer shapeRenderer = new ShapeRenderer();
+		shapeRenderer.setBaseSize(16);
+		shapeRenderer.setRenderType(AbstractShapeRenderer.RENDER_TYPE_DRAW_AND_FILL);
+		
 		// Edge Renderer
 		EdgeRenderer edgeRenderer = new EdgeRenderer();
 		edgeRenderer.setArrowType(Constants.EDGE_ARROW_NONE);
@@ -220,7 +234,7 @@ public class GraphRenderer {
 
 		// Renderer Factory
 		DefaultRendererFactory rendererFactory = new DefaultRendererFactory();
-		rendererFactory.setDefaultRenderer(labelRenderer);
+		rendererFactory.setDefaultRenderer(shapeRenderer);
 		rendererFactory.setDefaultEdgeRenderer(edgeRenderer);
 
 		visualization.setRendererFactory(rendererFactory);
@@ -250,11 +264,14 @@ public class GraphRenderer {
 	private void defineLayout(Visualization visualization) {
 
 		// Tree Layout
-//		RadialTreeLayout treeLayout = new RadialTreeLayout("graph");
+		RadialTreeLayout treeLayout = new RadialTreeLayout("graph");
+		
+		// Circle Layout
+		CircleLayout circleLayout = new CircleLayout("graph", 200);
 		
 		// Force Layout
 //		ForceDirectedLayout forceLayout = new ForceDirectedLayout("graph");
-		FruchtermanReingoldLayout frLayout = new FruchtermanReingoldLayout("graph", 200);
+		FruchtermanReingoldLayout frLayout = new FruchtermanReingoldLayout("graph", 10);
 //		forceSimulator = forceLayout.getForceSimulator();
 //		ForceSimulator forceSimulator = forceLayout.getForceSimulator();
 //		forceSimulator.getForces()[0].setParameter(0, -1.2f);
@@ -262,6 +279,7 @@ public class GraphRenderer {
 		ActionList layoutAction = new ActionList(100);
 //		layoutAction.add(treeLayout);
 		layoutAction.add(frLayout);
+//		layoutAction.add(circleLayout);
 		layoutAction.add(new RepaintAction());
 		visualization.putAction("layout", layoutAction);
 		visualization.runAfter("draw", "layout");
@@ -271,12 +289,14 @@ public class GraphRenderer {
 		ActionList draw = new ActionList();
 		DataSizeAction a = new DataSizeAction("graph.edges", "weight");
 		a.setMaximumSize(150);
+		ShapeAction graphShape = new ShapeAction("graph.nodes", Constants.SHAPE_ELLIPSE);
 //		a.setIs2DArea(true);
 //		a.setBinCount(8);
 //		a.setScale(Constants.QUANTILE_SCALE);
 //		draw.add(a);
 		draw.add(visualization.getAction("color"));
 		draw.add(a);
+		draw.add(graphShape);
 		visualization.putAction("draw", draw);
 	}
 

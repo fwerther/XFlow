@@ -6,9 +6,12 @@ import javax.persistence.Entity;
 public class TaskDependency extends Dependency<FileDependencyObject, FileDependencyObject>  {
 	
 	public TaskDependency(){
-		// Empty constructor.
-		this.setDirectedDependency(false);
+		super();
 		this.setType(TASK_DEPENDENCY);
+	}
+	
+	public TaskDependency(boolean isDirected){
+		super(isDirected);
 	}
 	
 }

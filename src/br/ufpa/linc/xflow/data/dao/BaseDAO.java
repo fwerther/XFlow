@@ -241,10 +241,10 @@ public abstract class BaseDAO<Entity> {
 		final EntityManager manager = DatabaseManager.getDatabaseSession();
 		
 		try{
-			final StringBuffer buffer = new StringBuffer("select a from ");
-			buffer.append(myClass.getName());
-			buffer.append(" a");
-			Collection<Entity> all = new ArrayList<Entity>(manager.createQuery(buffer.toString()).getResultList());
+			final StringBuilder builder = new StringBuilder("select a from ");
+			builder.append(myClass.getName());
+			builder.append(" a");
+			Collection<Entity> all = new ArrayList<Entity>(manager.createQuery(builder.toString()).getResultList());
 			return all;
 		}catch (NoResultException e) {
 			return null;

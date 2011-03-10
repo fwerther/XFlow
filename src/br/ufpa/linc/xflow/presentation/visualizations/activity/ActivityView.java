@@ -19,7 +19,7 @@ public class ActivityView extends AbstractVisualization {
 
 		JPanel stackedAreaPanel = stackedAreaRenderer.draw();
 		JPanel barsPanel = barChartRenderer.draw();
-		JSplitPane activitySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, stackedAreaPanel, barsPanel);
+		JSplitPane activitySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, barsPanel, stackedAreaPanel);
 		activitySplitPane.setOneTouchExpandable(true);
 		activitySplitPane.setDividerSize(7);
 		activitySplitPane.setDividerLocation(400);

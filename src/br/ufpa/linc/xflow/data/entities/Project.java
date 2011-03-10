@@ -49,6 +49,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
+
 @Entity(name = "project")
 public class Project implements Serializable, Comparable<Project>{
 
@@ -235,6 +237,18 @@ public class Project implements Serializable, Comparable<Project>{
 		
 		return authorsList;
 	}
+	
+//	public List<Author> getAuthorsListByRevisions(long initialRevision, long finalRevision) {
+//		final List<Author> authorsList = new ArrayList<Author>();
+//		for (Author author : this.getAuthors()) {
+//			Entry entry = new AuthorDAO().find
+//			if((author.getEntries().get(0).getId() >= initialEntry.getId()) && (author.getEntries().get(0).getId() <= finalEntry.getId())){
+//				authorsList.add(author);
+//			}
+//		}
+//
+//		return authorsList;
+//	}
 	
 	public Collection<String> getAuthorsStringList() {
 		final ArrayList<String> authorsList = new ArrayList<String>();

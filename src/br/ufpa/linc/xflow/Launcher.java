@@ -34,32 +34,20 @@
 package br.ufpa.linc.xflow;
 import java.util.Date;
 
-import javax.swing.JFrame;
-
 import br.ufpa.linc.xflow.cm.DataExtractor;
 import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
 import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
-import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
-import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
-import br.ufpa.linc.xflow.exception.core.analysis.AnalysisRangeException;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.exception.persistence.ProjectNameAlreadyExistsException;
 import br.ufpa.linc.xflow.metrics.MetricsEvaluator;
-import br.ufpa.linc.xflow.metrics.entry.AddedFiles;
-import br.ufpa.linc.xflow.metrics.entry.DeletedFiles;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
-import br.ufpa.linc.xflow.metrics.entry.ModifiedFiles;
-import br.ufpa.linc.xflow.metrics.file.Betweenness;
-import br.ufpa.linc.xflow.metrics.file.Centrality;
 import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
-import br.ufpa.linc.xflow.metrics.project.ClusterCoefficient;
-import br.ufpa.linc.xflow.metrics.project.Density;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
 import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.util.Filter;
@@ -165,43 +153,58 @@ public class Launcher {
 
 	public void drawVisualizations(Analysis analysis){
 		Visualizer dataVisualizer = new Visualizer();
-		try {
-			dataVisualizer.composeVisualizationsPane(analysis);
-			JFrame jframe = new JFrame();
-			jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			jframe.add(dataVisualizer.composeVisualizationsPane(new AnalysisDAO().findById(Analysis.class, 1L)));
-			jframe.setVisible(true);
-			jframe.pack();
-		} catch (DatabaseException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			dataVisualizer.composeVisualizationsPane(analysis);
+//			JFrame jframe = new JFrame();
+//			jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//			jframe.add(dataVisualizer.composeVisualizationsPane(new AnalysisDAO().findById(Analysis.class, 1L)));
+//			jframe.setVisible(true);
+//			jframe.pack();
+//		} catch (DatabaseException e) {
+//			e.printStackTrace();
+//		}
 	}
 	
 	public static void main(String[] args) {
 		
 		Launcher a = new Launcher();
-
-//		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
+		Project p;
+		
+		try {
+			p = new ProjectDAO().findById(Project.class, 1L);
+			a.resumeProjectDownload(p, 100000, new Filter(".*?\\.java"));
+		} catch (DatabaseException e) {
+		// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		/**
+		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
 		Project p = null;
-//		try {
-//			p = a.startNewProject("jEdit - Trunk only", "anonymous", "anonymous", "https://jedit.svn.sourceforge.net/svnroot/jedit", AccessFactory.SVN_REPOSITORY, "Only trunk AND java, html, h, c or cpp files considered!", false, true);
-//		} catch (ProjectNameAlreadyExistsException e) {
-//			e.printStackTrace();
-//		} catch (DatabaseException e) {
-//			e.printStackTrace();
-//		}
-//		
-//		try {
-//			a.downloadProjectData(p, 1, 40, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
-//		} catch (CMException e1) {
-//			e1.printStackTrace();
-//		} catch (DatabaseException e1) {
-//			e1.printStackTrace();
-//		}
+		
+		try {
+			p = a.startNewProject("ASF", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/asf", AccessFactory.SVN_REPOSITORY, "All ASF", true, false);
+		} catch (ProjectNameAlreadyExistsException e) {
+			e.printStackTrace();
+		} catch (DatabaseException e) {
+			e.printStackTrace();
+		}
+	
+		try {
+			a.downloadProjectData(p, 1, 50000, new Filter(".*?\\.java"));
+		} catch (CMException e1) {
+			e1.printStackTrace();
+		} catch (DatabaseException e1) {
+			e1.printStackTrace();
+		}
+		
 //		
 //		try {
 //			p = new ProjectDAO().findById(Project.class, 6L);
-//			a.resumeProjectDownload(p, 7185, new Filter(".*?"));
+//			a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
 //		} catch (DatabaseException e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
@@ -209,24 +212,27 @@ public class Launcher {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-//		
+
 		try {
 			p = new ProjectDAO().findById(Project.class, 1L);
 		} catch (DatabaseException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		*/
 		
+/**
 		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
-		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "JEdit 4k commits analysis", true);
+		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "", true);
 		try {
-			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, p.getFirstRevision(), 4000, 0, 0, 30, true);
-			a.processProject(analysis, new Filter(".*?\\.(java|c|cpp|h|html|jj)"));
+			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, 1, 13938, 0, 0, 30, false);
+			a.processProject(analysis, new Filter(".*?"));
 		} catch (DatabaseException e) {
 			e.printStackTrace();
 		} catch (AnalysisRangeException e) {
 			e.printStackTrace();
 		}
+		
 //		
 //		
 //		FileMetricModel[] fileMetrics = new FileMetricModel[]{
@@ -243,7 +249,7 @@ public class Launcher {
 //		
 //		//XXX: CÓDIGO PARA CALCULDO DAS MÉTRICAS
 //		try {
-//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 3L), projectMetrics, entryMetrics, fileMetrics);
+//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 10L), projectMetrics, entryMetrics, fileMetrics);
 //		} catch (DatabaseException e) {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
@@ -256,5 +262,6 @@ public class Launcher {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
+*/
 	}
 }

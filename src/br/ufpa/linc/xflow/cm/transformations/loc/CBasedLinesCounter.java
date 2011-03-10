@@ -33,13 +33,12 @@
 
 package br.ufpa.linc.xflow.cm.transformations.loc;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class CBasedLinesCounter implements LOCCounter {
 
 	@Override
 	public int countFileLOC(String sourceCode) {
+		sourceCode = sourceCode.replaceAll("\r", "\n");
 		sourceCode = removeInvalidLines(sourceCode);
 		return sourceCode.split("\n").length;
 	}
@@ -47,25 +46,20 @@ public class CBasedLinesCounter implements LOCCounter {
 	@Override
 	public String removeInvalidLines(String sourceCode){
 		sourceCode = removeCommentedLines(sourceCode);
+		sourceCode = sourceCode.replaceAll("\r", "\n");
 		sourceCode = removeBlankLines(sourceCode);
-
 		return sourceCode;
 	}
 
 	private String removeBlankLines(final String sourceCode) {
+		StringBuilder builder = new StringBuilder();
 		String[] linesOfCode = sourceCode.split("\n");
-		List<String> validLines = new ArrayList<String>();
-		for (int i = 0; i < linesOfCode.length; i++) {
-			if(linesOfCode[i].trim().length() > 0){
-				validLines.add(linesOfCode[i]+"\n");
+		for (String line : linesOfCode) {
+			if(!line.trim().isEmpty()){
+				builder.append(line + "\n");
 			}
 		}
-		StringBuffer buffer = new StringBuffer();
-		for (String string : validLines) {
-			buffer.append(string);
-		}
-
-		return buffer.toString();
+		return builder.toString();
 	}
 
 	private String removeCommentedLines(final String sourcecode) {
@@ -158,7 +152,6 @@ public class CBasedLinesCounter implements LOCCounter {
 				}
 			}
 		}
-
 		return sourcecode;
 	}
 

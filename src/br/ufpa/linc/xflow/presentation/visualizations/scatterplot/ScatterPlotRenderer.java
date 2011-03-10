@@ -402,79 +402,91 @@ public class ScatterPlotRenderer {
 		double[] higherEntryMetricValues = new double[availableEntryMetrics.length];
 		double[] higherFileMetricValues = new double[availableFileMetrics.length];
 		
-		List<Entry> entries = new EntryDAO().getAllEntriesWithinEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
+		final List<Entry> entries;
+		
+		if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
+			entries = new EntryDAO().getAllEntriesWithinEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
+		} else {
+			entries = new EntryDAO().getAllEntriesWithinRevisions(AbstractVisualization.getCurrentAnalysis().getProject(), AbstractVisualization.getCurrentAnalysis().getFirstEntry().getRevision(), AbstractVisualization.getCurrentAnalysis().getLastEntry().getRevision());
+		}
 		
 		for (int i = 0; i < entries.size(); i++) {
 			
 			final Entry entry = entries.get(i);
 
-			dataTable.addRow();
-			dataTable.set(dataTable.getRowCount()-1, "Revision Number", entry.getRevision());
-			dataTable.set(dataTable.getRowCount()-1, "Commit Sequence", (i+1));
-			dataTable.set(dataTable.getRowCount()-1, "Author", entry.getAuthor().getName());
-			dataTable.set(dataTable.getRowCount()-1, "AuthorID", entry.getAuthor().getId());
-			dataTable.set(dataTable.getRowCount()-1, "Comment", entry.getComment());
-			dataTable.set(dataTable.getRowCount()-1, "Author Sequence Number", new EntryDAO().getEntrySequenceNumber(entry));
-			dataTable.set(dataTable.getRowCount()-1, "Files", entry.getListOfEntryFiles());
+			if((new ProjectMetricsDAO().findProjectMetricValuesByEntry(Visualizer.getMetricsSession(), entry)) != null){
 
-			if(availableProjectMetrics.length > 0){
-				ProjectMetricValues projectMetricsValues = new ProjectMetricsDAO().findProjectMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
-				if(projectMetricsValues != null){
-					for (int j = 0; j < availableProjectMetrics.length; j++) {
-						double metricValue = projectMetricsValues.getValueByName(availableProjectMetrics[j].getMetricName());
-						dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), metricValue);
-						higherProjectMetricValues[j] = Math.max(higherProjectMetricValues[j], metricValue);
+				dataTable.addRow();
+				dataTable.set(dataTable.getRowCount()-1, "Revision Number", entry.getRevision());
+				dataTable.set(dataTable.getRowCount()-1, "Commit Sequence", (i+1));
+				dataTable.set(dataTable.getRowCount()-1, "Author", entry.getAuthor().getName());
+				dataTable.set(dataTable.getRowCount()-1, "AuthorID", entry.getAuthor().getId());
+				dataTable.set(dataTable.getRowCount()-1, "Comment", entry.getComment());
+				dataTable.set(dataTable.getRowCount()-1, "Author Sequence Number", new EntryDAO().getEntrySequenceNumber(entry));
+				dataTable.set(dataTable.getRowCount()-1, "Files", entry.getListOfEntryFiles());
+
+				if(availableProjectMetrics.length > 0){
+					ProjectMetricValues projectMetricsValues = new ProjectMetricsDAO().findProjectMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
+					if(projectMetricsValues != null){
+						for (int j = 0; j < availableProjectMetrics.length; j++) {
+							double metricValue = projectMetricsValues.getValueByName(availableProjectMetrics[j].getMetricName());
+							dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), metricValue);
+							higherProjectMetricValues[j] = Math.max(higherProjectMetricValues[j], metricValue);
+						}
 					}
 				}
-			}
 
-			if(availableEntryMetrics.length > 0){
-				EntryMetricValues entryMetricsValues = new EntryMetricsDAO().findEntryMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
-				if(entryMetricsValues != null){
-					for (int j = 0; j < availableEntryMetrics.length; j++) {
-						double metricValue = entryMetricsValues.getValueByName(availableEntryMetrics[j].getMetricName());
-						dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), metricValue);
-						higherEntryMetricValues[j] = Math.max(higherEntryMetricValues[j], metricValue);
+				if(availableEntryMetrics.length > 0){
+					EntryMetricValues entryMetricsValues = new EntryMetricsDAO().findEntryMetricValuesByEntry(Visualizer.getMetricsSession(), entry);
+					if(entryMetricsValues != null){
+						for (int j = 0; j < availableEntryMetrics.length; j++) {
+							double metricValue = entryMetricsValues.getValueByName(availableEntryMetrics[j].getMetricName());
+							dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), metricValue);
+							higherEntryMetricValues[j] = Math.max(higherEntryMetricValues[j], metricValue);
+						}
 					}
 				}
-			}
 
-			if(availableFileMetrics.length > 0){
-				List<FileMetricValues> fileMetricsValues = new FileMetricsDAO().findFileMetricValuesByRevision(Visualizer.getMetricsSession(), entry);
-				if(fileMetricsValues != null){
-					for (FileMetricValues fileMetricValue : fileMetricsValues) {
+				if(availableFileMetrics.length > 0){
+					List<FileMetricValues> fileMetricsValues = new FileMetricsDAO().findFileMetricValuesByRevision(Visualizer.getMetricsSession(), entry);
+					if(fileMetricsValues != null){
+						for (FileMetricValues fileMetricValue : fileMetricsValues) {
+							for (int j = 0; j < availableFileMetrics.length; j++) {
+								metricValues[(j*metricNamesVariations.length)] = 0;
+							}
+							for (int j = 0; j < availableFileMetrics.length; j++) {
+								final double metricValue = fileMetricValue.getValueByName(availableFileMetrics[j].getMetricName());
+								higherFileMetricValues[j] = Math.max(higherFileMetricValues[j], metricValue);
+								metricValues[(j*metricNamesVariations.length)] = (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
+								metricValues[(j*metricNamesVariations.length)+1] += metricValue;
+								metricValues[(j*metricNamesVariations.length)+2] += (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
+							}
+						}
+
 						for (int j = 0; j < availableFileMetrics.length; j++) {
-							metricValues[(j*metricNamesVariations.length)] = 0;
-						}
-						for (int j = 0; j < availableFileMetrics.length; j++) {
-							final double metricValue = fileMetricValue.getValueByName(availableFileMetrics[j].getMetricName());
-							higherFileMetricValues[j] = Math.max(higherFileMetricValues[j], metricValue);
-							metricValues[(j*metricNamesVariations.length)] = (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
-							metricValues[(j*metricNamesVariations.length)+1] += metricValue;
-							metricValues[(j*metricNamesVariations.length)+2] += (metricValues[(j*metricNamesVariations.length)] < metricValue ? metricValue : metricValues[(j*metricNamesVariations.length)]);
-						}
-					}
-
-					for (int j = 0; j < availableFileMetrics.length; j++) {
-						for (int k = 0; k < metricNamesVariations.length; k++) {
-							dataTable.set(dataTable.getRowCount()-1, metricNamesVariations[k]+availableFileMetrics[j].getMetricName(), metricValues[(j*metricNamesVariations.length) + k]);
+							for (int k = 0; k < metricNamesVariations.length; k++) {
+								dataTable.set(dataTable.getRowCount()-1, metricNamesVariations[k]+availableFileMetrics[j].getMetricName(), metricValues[(j*metricNamesVariations.length) + k]);
+							}
 						}
 					}
 				}
-			}
 
-//			dataTable.addRow();
-//			dataTable.set(dataTable.getRowCount()-1, "Author", "Reference");
-//			dataTable.set(dataTable.getRowCount()-1, "AuthorID", 9999);
-//			for (int j = 0; j < higherProjectMetricValues.length; j++) {
-//				dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), higherProjectMetricValues[j]);
-//			}
-//			for (int j = 0; j < higherEntryMetricValues.length; j++) {
-//				dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), higherEntryMetricValues[j]);
-//			}
-//			for (int j = 0; j < higherFileMetricValues.length; j++) {
-//				dataTable.set(dataTable.getRowCount()-1, "Max "+availableFileMetrics[j].getMetricName(), higherFileMetricValues[j]);
-//			}
+				//			dataTable.addRow();
+				//			dataTable.set(dataTable.getRowCount()-1, "Author", "Reference");
+				//			dataTable.set(dataTable.getRowCount()-1, "AuthorID", 9999);
+				//			dataTable.set(dataTable.getRowCount()-1, "Revision Number", entry.getRevision());
+				//			dataTable.set(dataTable.getRowCount()-1, "Commit Sequence", (i+1));
+				//
+				//			for (int j = 0; j < higherProjectMetricValues.length; j++) {
+				//				dataTable.set(dataTable.getRowCount()-1, availableProjectMetrics[j].getMetricName(), higherProjectMetricValues[j]);
+				//			}
+				//			for (int j = 0; j < higherEntryMetricValues.length; j++) {
+				//				dataTable.set(dataTable.getRowCount()-1, availableEntryMetrics[j].getMetricName(), higherEntryMetricValues[j]);
+				//			}
+				//			for (int j = 0; j < higherFileMetricValues.length; j++) {
+				//				dataTable.set(dataTable.getRowCount()-1, "Max "+availableFileMetrics[j].getMetricName(), higherFileMetricValues[j]);
+				//			}
+			} 
 		}
 	}
 

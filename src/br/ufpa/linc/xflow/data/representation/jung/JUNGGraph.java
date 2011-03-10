@@ -179,6 +179,10 @@ public class JUNGGraph {
 		final FileDependencyObjectDAO fileDependencyDAO = new FileDependencyObjectDAO();
 		final UndirectedSparseGraph<JUNGVertex, JUNGEdge> graph = new UndirectedSparseGraph<JUNGVertex, JUNGEdge>();
 		
+		if(verticesCache == null){
+			verticesCache = new HashMap<Long, JUNGVertex>();
+		}
+		
 		for (int i = 0; i < matrix.getRows(); i++) {
 			final AuthorDependencyObject dependedAuthor = authorDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
 			final JUNGVertex vertex1 = new JUNGVertex();
@@ -205,6 +209,10 @@ public class JUNGGraph {
 		
 		final FileDependencyObjectDAO fileDependencyDAO = new FileDependencyObjectDAO();
 		final UndirectedSparseGraph<JUNGVertex, JUNGEdge> graph = new UndirectedSparseGraph<JUNGVertex, JUNGEdge>();
+		
+		if(verticesCache == null){
+			verticesCache = new HashMap<Long, JUNGVertex>();
+		}
 		
 		for (int i = 0; i < matrix.getRows(); i++) {
 			final FileDependencyObject dependedFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);

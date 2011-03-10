@@ -79,7 +79,7 @@ public class JCustomSearchPanel extends JSearchPanel {
 				e.printStackTrace();
 			}
 			fileChangeRate = new HashMap<String, Integer>();
-        	StringBuffer filesName = new StringBuffer();
+        	StringBuilder filesName = new StringBuilder();
         	for (String filePath : filePaths) {
         		if(fileChangeRate.containsKey(filePath)){
         			fileChangeRate.put(filePath, fileChangeRate.get(filePath)+1);

@@ -118,13 +118,14 @@ public class DatabaseManager {
 	private DatabaseManager() throws DatabaseException {
 //		loadProperties();
 //		gotta remind to put your database password
+		
 		String host = "localhost";
 		String port = "3306";
-		String DBname = "xflow-teste";
+		String DBname = "xflow";
 		String DBUser = "root";
-		String DBpassword = "123456";
+		String DBpassword = "83861285";
 		String dialect = "br.ufpa.linc.xflow.data.database.XFlowMySqlDialect";
-		
+			
 //		String dialect = databaseProperties.getProperty("dialect");
 //		String host = databaseProperties.getProperty("host");
 //		String port = databaseProperties.getProperty("port");

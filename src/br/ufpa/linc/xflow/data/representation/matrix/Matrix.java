@@ -119,7 +119,7 @@ public class Matrix {
 						}
 					}
 					else if (timesChanged != 0){
-						if ((sparseMatrix.get(i,j) / timesChanged) >= confidence)
+						if (((sparseMatrix.get(i,j) / timesChanged) >= confidence) && (timesChanged >= support))
 							sparseMatrix.put(i, j, 1);
 					}
 				}
@@ -141,5 +141,9 @@ public class Matrix {
 		int colsToBeIncreased = newSize - this.getSparseMatrix().getColumns();
 		this.sparseMatrix.increaseDimensions(0, colsToBeIncreased);
 		return this;
+	}
+	
+	public String toString(){
+		return this.sparseMatrix.toString();
 	}
 }

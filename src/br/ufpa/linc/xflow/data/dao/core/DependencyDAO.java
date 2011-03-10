@@ -65,7 +65,7 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 		System.out.println(foundEntry);
 		
 		
-		final String subquery = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID and dep.type = :dependencyType and dep.associatedEntry.id = "+entryID;
+		final String subquery = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID and dep.type = :dependencyType and dep.associatedEntry.id = "+foundEntry;
 		return findUnique(Dependency.class, subquery, parameter1, parameter3);
 	}
 	

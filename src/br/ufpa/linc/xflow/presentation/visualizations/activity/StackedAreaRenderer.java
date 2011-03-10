@@ -200,12 +200,12 @@ public class StackedAreaRenderer {
 		String[] fields = datacolumns.toArray(new String[]{});
 
 		ObjectRangeModel orm = new ObjectRangeModel(fields); 
-		AxisLabelLayout xlabels = new AxisLabelLayout("xAxis",Constants.X_AXIS,orm);
-
+//		AxisLabelLayout xlabels = new AxisLabelLayout("xAxis",Constants.X_AXIS,orm);
+//
 		//		yAxis = new AxisLayout("commits", "Density", Constants.Y_AXIS, VisiblePredicate.TRUE);
 		//		yLabels = new AxisLabelLayout("yAxis", Constants.Y_AXIS, yAxisRangeModel);
 		//		AxisLabelLayout ylabels = new AxisLabelLayout("ylab",Constants.Y_AXIS,orm);
-		layout.add(xlabels);
+//		layout.add(xlabels);
 		//		layout.add(yLabels);
 		layout.add(new StackedAreaChart("activity", VisualItem.POLYGON, fields));
 		layout.add(new RepaintAction());

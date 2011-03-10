@@ -84,7 +84,7 @@ public class DevelopersPanelControl {
 			@Override
 			public void valueChanged(ListSelectionEvent event) {
 				selectedAuthorsQuery = new String();
-				StringBuffer authorNames = new StringBuffer();
+				StringBuilder authorNames = new StringBuilder();
 				for ( int i=0; i<checkBoxList.getModel().getSize(); ++i ) {
 					if(checkBoxList.getSelectionModel().isSelectedIndex(i)){
 						System.out.println(((JCheckBox)checkBoxList.getComponent(i)).getText());

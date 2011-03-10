@@ -16,7 +16,6 @@ import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
 import br.ufpa.linc.xflow.data.entities.CoordinationRequirements;
-import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
@@ -89,18 +88,6 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 						taskAssignment.setDependencies(taskDependencies);
 						dependencyDAO.insert(taskAssignment);
 						System.out.print(" done!\n");
-
-						/**
-					if (i == entries.size() -1 ){
-						Matrix matrix = this.analysis.processDependencyMatrix(taskDependency);
-						for (int j = 0; j < matrix.getRows(); j++) {
-							for (int j2 = 0; j2 < matrix.getColumns(); j2++) {
-								System.out.print(matrix.get(j, j2) + " ");							
-							}
-							System.out.println();
-						}
-					}
-						 */
 
 						if(this.analysis.isCoordinationRequirementPersisted()){
 							System.out.print("* Calculating coordination requirements...");

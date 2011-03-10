@@ -46,7 +46,15 @@ public abstract class Dependency<Dependable extends DependencyObject, Dependents
 	
 	@Column(name = "DEPENDENCY_TYPE")
 	private int type;
+	
+	public Dependency() {
+		// Empty constructor.
+	}
 
+	public Dependency(boolean isDirected){
+		this.directedDependency = isDirected;
+	}
+	
 	public long getId() {
 		return id;
 	}
