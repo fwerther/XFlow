@@ -73,7 +73,6 @@ public class CBasedLinesCounter implements LOCCounter {
 		return sourcecode;
 	}
 
-	//TODO: TALVEZ TENHA ERRO AKEE!
 	private String removeBlockComments(String sourcecode) {
 
 		int currentCommentIndex = -1;

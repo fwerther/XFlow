@@ -38,14 +38,18 @@ import br.ufpa.linc.xflow.cm.DataExtractor;
 import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
 import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
+import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
+import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
+import br.ufpa.linc.xflow.exception.core.analysis.AnalysisRangeException;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.exception.persistence.ProjectNameAlreadyExistsException;
 import br.ufpa.linc.xflow.metrics.MetricsEvaluator;
+import br.ufpa.linc.xflow.metrics.cochange.CoChangeCalculator;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
 import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
@@ -166,13 +170,21 @@ public class Launcher {
 	}
 	
 	public static void main(String[] args) {
-		
-		Launcher a = new Launcher();
-		Project p;
-		
+	
+		try{
+			Launcher a = new Launcher();
+			CoChangesAnalysis analysis = (CoChangesAnalysis)new AnalysisDAO().findById(Analysis.class, 1L);
+			CoChangeCalculator coChangeCalculator = new CoChangeCalculator();
+			coChangeCalculator.calculate(analysis);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		/**
+		Project p = null;
+	
 		try {
-			p = new ProjectDAO().findById(Project.class, 1L);
-			a.resumeProjectDownload(p, 100000, new Filter(".*?\\.java"));
+			p = new ProjectDAO().findById(Project.class, 2L);
+			a.resumeProjectDownload(p, 200000, new Filter(".*?\\.java"));
 		} catch (DatabaseException e) {
 		// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -180,13 +192,14 @@ public class Launcher {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+		*/
 		/**
 		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
+		Launcher a = new Launcher();
 		Project p = null;
 		
 		try {
-			p = a.startNewProject("ASF", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/asf", AccessFactory.SVN_REPOSITORY, "All ASF", true, false);
+			p = a.startNewProject("Moenia", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/sourceforge/moenia", AccessFactory.SVN_REPOSITORY, "Moenia (no filter)", true, false);
 		} catch (ProjectNameAlreadyExistsException e) {
 			e.printStackTrace();
 		} catch (DatabaseException e) {
@@ -194,47 +207,39 @@ public class Launcher {
 		}
 	
 		try {
-			a.downloadProjectData(p, 1, 50000, new Filter(".*?\\.java"));
+			a.downloadProjectData(p, 1, 123, new Filter(".*?"));
 		} catch (CMException e1) {
 			e1.printStackTrace();
 		} catch (DatabaseException e1) {
 			e1.printStackTrace();
 		}
-		
-//		
-//		try {
-//			p = new ProjectDAO().findById(Project.class, 6L);
-//			a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
-//		} catch (DatabaseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		} catch (CMException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-
-		try {
-			p = new ProjectDAO().findById(Project.class, 1L);
-		} catch (DatabaseException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		*/
 		
-/**
-		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
-		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "", true);
+	/**
 		try {
-			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, 1, 13938, 0, 0, 30, false);
-			a.processProject(analysis, new Filter(".*?"));
+			p = new ProjectDAO().findById(Project.class, 3L);
+			//a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
+			a.resumeProjectDownload(p, 19441, new Filter(".*?"));
+		} catch (DatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (CMException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
+		/**
+		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
+		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "Moenia Java code", false);
+		try {
+			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, 1, 13, 0, 0, 0, false);
+			a.processProject(analysis, new Filter(".*?\\.java"));
 		} catch (DatabaseException e) {
 			e.printStackTrace();
 		} catch (AnalysisRangeException e) {
 			e.printStackTrace();
 		}
-		
-//		
-//		
+		*/
 //		FileMetricModel[] fileMetrics = new FileMetricModel[]{
 //	            new Centrality(), new Betweenness()
 //		};
@@ -262,6 +267,5 @@ public class Launcher {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-*/
 	}
 }

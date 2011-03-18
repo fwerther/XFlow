@@ -190,8 +190,9 @@ public class SparseMatrix {
 	}
 	
 	private String getKey(int row, int column){
-		String key = String.valueOf(row) + "," + String.valueOf(column);
-		return key;
+		StringBuilder builder = new StringBuilder();
+		builder.append(row).append(",").append(column);
+		return builder.toString();
 	}
 		
 	public String toString(){

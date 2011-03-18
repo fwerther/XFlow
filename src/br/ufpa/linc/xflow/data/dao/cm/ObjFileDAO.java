@@ -111,26 +111,34 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 	}
 	
 	public ObjFile findAddedFileByPathUntilEntry(final Project project, final Entry entry, final String filePath) throws DatabaseException {
-		final String query = "SELECT f from file f where f.id = (select max(f.id) from file f where f.path = :filePath and f.entry.project = :project and f.entry.id <= :entryID and f.operationType = 'A')";
+		final String query = "SELECT f FROM file f WHERE f.id = " +
+				"(SELECT MAX(f.id) FROM file f " +
+				"JOIN f.entry AS entry " +
+				"WHERE f.path = :filePath " +
+				"AND entry.project.id = :project " +
+				"AND entry.id <= :entryID " +
+				"AND f.operationType = 'A')";
+		
 		final Object[] parameter1 = new Object[]{"filePath", filePath};
-		final Object[] parameter2 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		final Object[] parameter3 = new Object[]{"entryID", entry.getId()};
 		
 		return findUnique(ObjFile.class, query, parameter1, parameter2, parameter3);
 	}
 	
 	public int getFileLOCUntilRevision(final Project project, final long revision, final String filePath) throws DatabaseException{
-		final String query = "SELECT f from file f where f.id = (select max(f.id) from file f where f.path = :filePath and f.entry.project = :project and f.entry.revision <= :revision)";
-		
-//		String query = "SELECT MAX(f.id) from file f where f.path = :filePath and f.entry.project = :project and f.entry.date <= :date";
-//		Object[] parameter1 = new Object[]{"filePath", filePath};
-//		Object[] parameter2 = new Object[]{"project", project};
-//		Object[] parameter3 = new Object[]{"date", date};
+		final String query = "SELECT f.totalLinesOfCode FROM file f WHERE f.id = " +
+				"(SELECT MAX(f.id) FROM file f " +
+				"JOIN f.entry AS entry " +
+				"WHERE f.path = :filePath " +
+				"AND entry.project.id = :project " +
+				"AND entry.revision <= :revision)";
+
 		final Object[] parameter1 = new Object[]{"filePath", filePath};
-		final Object[] parameter2 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		final Object[] parameter3 = new Object[]{"revision", revision};
 		
-		return findUnique(ObjFile.class, query, parameter1, parameter2, parameter3).getTotalLinesOfCode();
+		return getIntegerValueByQuery(query,parameter1,parameter2,parameter3);
 	}
 	
 	public int getFileLOCUntilDate(final Project project, final Date date, final String filePath) throws DatabaseException{
@@ -143,12 +151,19 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 	}
 	
 	public ObjFile findFileByPath(final long projectID, final String path) throws DatabaseException {
-//		String query = "SELECT f from file f where f.id = (select max(f.id) from file f where f.path = :filePath and f.entry.project = :project.id)";
-		final String query = "SELECT MAX(file.entry.id) from file file WHERE file.operationType = 'A' and file.path = :path and file.entry.project.id = :project";
+		//final String query = "SELECT MAX(file.entry.id) from file file WHERE file.operationType = 'A' and file.path = :path and file.entry.project.id = :project";
+		
+		//This query is more efficient, since it does not require a
+		//table join on project 
+		final String query = "SELECT MAX(entry.id) FROM file AS file " +
+				"JOIN file.entry as entry " +
+				"WHERE file.operationType = 'A' " +
+				"AND file.path = :path " +
+				"AND entry.project.id = :project";
 		final Object[] parameter1 = new Object[]{"path", path};
 		final Object[] parameter2 = new Object[]{"project", projectID};
 		final long entryID = getLongValueByQuery(query, parameter1, parameter2);
-//		
+	
 		final String subquery = "SELECT file from file file WHERE file.id = (select max(file.id) from file file where file.entry.id = :max and file.path = :path and file.operationType != 'D')";
 		final Object[] parameter3 = new Object[]{"max", entryID};
 		final Object[] parameter4 = new Object[]{"path", path};

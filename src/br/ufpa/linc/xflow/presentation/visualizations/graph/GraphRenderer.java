@@ -94,7 +94,7 @@ public class GraphRenderer {
 				m = null;
 			}
 		} else {
-			m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processHistoricalEntryDependencyMatrix(dependency);
+			m = ((CoChangesAnalysis)(AbstractVisualization.getCurrentAnalysis())).processHistoricalDependencyMatrix(dependency);
 		}
 		final JUNGGraph newGraph;
 

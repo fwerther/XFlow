@@ -10,7 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 
 @Entity(name="dependency_object")
 @Inheritance(strategy=InheritanceType.JOINED)
@@ -28,7 +28,7 @@ public abstract class DependencyObject {
 	@Column(name = "DEPENDENCY_STAMP", nullable = false)
 	private int assignedStamp;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "ANALYSIS_ID", nullable = false)
 	private Analysis analysis;
 	

@@ -35,7 +35,6 @@ package br.ufpa.linc.xflow.data.entities;
 
 import java.io.Serializable;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -61,7 +60,7 @@ public abstract class Resource implements Serializable {
 	@Column(name = "RESOURCE_NAME", nullable = false)
 	private String name;
 	
-	@OneToOne(cascade = CascadeType.ALL)
+	@OneToOne
 	@JoinColumn(name = "DELETED_ON")
 	private Entry deletedOn = null;
 	

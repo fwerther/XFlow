@@ -51,8 +51,8 @@ public abstract class AnalysisFactory {
 	}
 	
 	private final static boolean checkForValidInterval(final Entry initialEntry, final Entry finalEntry) throws DatabaseException, AnalysisRangeException {
-		final List<Entry> entries = new EntryDAO().getAllEntriesWithinEntries(initialEntry, finalEntry);
-		if(entries == null) throw new AnalysisRangeException();
+		int entries = new EntryDAO().countEntriesByEntriesLimit(initialEntry, finalEntry);
+		if(entries <= 0) throw new AnalysisRangeException();
 		else return true;
 	}
 

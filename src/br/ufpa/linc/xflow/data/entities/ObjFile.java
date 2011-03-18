@@ -33,12 +33,13 @@
 
 package br.ufpa.linc.xflow.data.entities;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Transient;
+
+import org.hibernate.annotations.Index;
 
 @Entity(name = "file")
 public class ObjFile extends Resource implements Comparable<ObjFile>{
@@ -48,7 +49,7 @@ public class ObjFile extends Resource implements Comparable<ObjFile>{
 	 */
 	private static final long serialVersionUID = -9048464688545200449L;
 
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name = "FILE_ENTRY", nullable = false)
 	private Entry entry;
 	
@@ -61,9 +62,11 @@ public class ObjFile extends Resource implements Comparable<ObjFile>{
 	@Column(name = "FILE_EXTENSION", nullable = false)
 	private String extesion;
 	
+	@Index(name = "file_path_index")
 	@Column(name = "FILE_PATH", nullable = false)
 	private String path;
 	
+	@Index(name = "file_operation_index")
 	@Column(name = "FILE_OPERATION", nullable = false)
 	private char operationType;
 	
@@ -169,5 +172,4 @@ public class ObjFile extends Resource implements Comparable<ObjFile>{
 		}
 		return 1;
 	}
-
 }

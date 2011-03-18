@@ -89,9 +89,9 @@ public class EntryDAO extends BaseDAO<Entry>{
 	}
 
 	public Entry findEntryFromRevision(final Project project, final long revision) throws DatabaseException {
-		final String query = "SELECT entry FROM entry entry WHERE entry.revision = :revision AND entry.project = :project";
+		final String query = "SELECT entry FROM entry entry WHERE entry.revision = :revision AND entry.project.id = :project";
 		final Object[] parameter1 = new Object[]{"revision", revision};
-		final Object[] parameter2 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		
 		return findUnique(Entry.class, query, parameter1, parameter2);
 	}
@@ -134,6 +134,15 @@ public class EntryDAO extends BaseDAO<Entry>{
 		final Object[] parameter3 = new Object[]{"endrevision", endRevision};
 
 		return (ArrayList<Entry>) findByQuery(Entry.class, query, parameter1, parameter2, parameter3);
+	}
+	
+	public List<Long> getAllRevisionsWithinRevisions(final Project project, final long startRevision, final long endRevision) throws DatabaseException {
+		final String query = "select e.revision FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision order by e.revision";
+		final Object[] parameter1 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"startrevision", startRevision};
+		final Object[] parameter3 = new Object[]{"endrevision", endRevision};
+
+		return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);
 	}
 	
 	
@@ -272,6 +281,15 @@ public class EntryDAO extends BaseDAO<Entry>{
 		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getId()};
 		
 		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2, parameter3);
+	}
+	
+	public List<Long> getAllRevisionsWithinEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
+		final String query = "SELECT entry.revision FROM entry entry WHERE entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID";
+		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject()};
+		final Object[] parameter2 = new Object[]{"lowestID", firstEntry.getId()};
+		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getId()};
+		
+		return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);
 	}
 
 	public Date getHighestEntryDateByEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {

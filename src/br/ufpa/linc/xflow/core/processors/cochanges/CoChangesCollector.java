@@ -1,17 +1,19 @@
 package br.ufpa.linc.xflow.core.processors.cochanges;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import br.ufpa.linc.xflow.core.processors.DependenciesIdentifier;
+import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
 import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
@@ -43,37 +45,37 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 	private int latestAuthorStampAssigned;
 	
 	@Override
-	public final void dataCollect(List<Entry> entries, Analysis analysis, Filter filter) throws DatabaseException {
+	//5) CONSEGUIR VALOR MÉDIO DE ACOPLAMENTO ESTR. PARA TODOS OS PARES
+	public final void dataCollect(List<Long> revisions, Analysis analysis, Filter filter) throws DatabaseException {
 		this.analysis = (CoChangesAnalysis) analysis;
 		this.filter = filter;
 		initiateCache();
-		if(this.analysis.isCoordinationRequirementPersisted()){
-			initiateCoChangesMatrix(entries.get(0));
-		}
-		
+				
 		System.out.println("** Starting CoChanges analysis **");
 		final int maxFiles = this.analysis.getMaxFilesPerRevision();
-
-		for (int i = 0; i < entries.size(); i++) {
-			
-			final DependencyDAO dependencyDAO = new DependencyDAO();
-			final Entry entry = entries.get(i);
-			
-			System.out.print("- Processing entry: "+entry.getRevision()+" ("+i+")\n");
+		
+		EntryDAO entryDAO = new EntryDAO();
+		DependencyDAO dependencyDAO = new DependencyDAO();
+		
+		for (Long revision : revisions) {
+		
+			final Entry entry = entryDAO.findEntryFromRevision(analysis.getProject(), revision);			
+			System.out.print("- Processing entry: "+entry.getRevision()+" ("+revision+")\n");
 
 			if(entry.getEntryFiles().size() > 0 ){
 				if((entry.getEntryFiles().size() <= maxFiles) || (maxFiles == 0)){
 					System.out.print("* Collecting file dependencies...");
+					
 					final Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies = gatherTaskDependency(entry.getEntryFiles());
 					if(fileDependencies.size() > 0) { 
 						final TaskDependency taskDependency = new TaskDependency();
 						taskDependency.setAssociatedAnalysis(analysis);
 						taskDependency.setAssociatedEntry(entry);
-						for (DependencySet<FileDependencyObject, FileDependencyObject> dependencySet : fileDependencies) {
-							dependencySet.setAssociatedDependency(taskDependency);
-						}
+	
+						//Sets on both sides (bi-directional association)
 						taskDependency.setDependencies(fileDependencies);
-						dependencyDAO.insert(taskDependency);
+								
+						dependencyDAO.insert(taskDependency);						
 						System.out.print(" done!\n");
 
 						System.out.print("* Collecting tasks dependencies...");
@@ -114,7 +116,10 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 			else{
 				System.out.println("* Skipped. No Co-Change info on revision.");
 			}
-
+			//FIXME:
+			//As we don't have an application layer yet, it is necessary 
+			//to frequently clear the persistence context to avoid memory issues
+			DatabaseManager.getDatabaseSession().clear();
 		}
 		
 	}
@@ -126,27 +131,17 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 		latestAuthorStampAssigned = new AuthorDependencyObjectDAO().checkHighestStamp(analysis);
 	}
 
-	private void initiateCoChangesMatrix(Entry entry) throws DatabaseException {
-		if(entry == analysis.getFirstEntry()){
-			taskAssignmentMatrix = new Matrix(0);
-			taskDependencyMatrix = new Matrix(0);
-		} else {
-			taskAssignmentMatrix = new Matrix(0);
-			taskDependencyMatrix = new Matrix(0);		
-		}
-	}
-
 	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherTaskDependency(List<ObjFile> changedFiles) throws DatabaseException {
-		
-		final FileDependencyObjectDAO dependencyObjDAO = new FileDependencyObjectDAO();
-		Set<DependencySet<FileDependencyObject, FileDependencyObject>> dependenciesSet = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
-		Vector<FileDependencyObject> dependencyObjectVector = new Vector<FileDependencyObject>();
+		FileDependencyObjectDAO dependencyObjDAO = new FileDependencyObjectDAO();
+		Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
+		List<FileDependencyObject> dependencyObjectList = new ArrayList<FileDependencyObject>();
 
-		//Builds the set of dependency objects
+		//Builds the list of dependency objects
 		for (ObjFile changedFile : changedFiles) {
 			if(filter.match(changedFile.getPath())){
-				final FileDependencyObject dependencyObject;
+				FileDependencyObject dependencyObject;
 				
+				//Added file
 				if(changedFile.getOperationType() == 'A'){
 					latestFileStampAssigned++;
 					
@@ -157,50 +152,60 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 					dependencyObject.setAssignedStamp(latestFileStampAssigned);
 					
 					dependencyObjDAO.insert(dependencyObject);
-					dependencyObjectsCache.put(changedFile.getPath(), dependencyObject);
-					dependencyObjectsCache.put("\\u0F"+latestFileStampAssigned, dependencyObject);
-				} else if(dependencyObjectsCache.containsKey(changedFile.getPath())){
-					dependencyObject = (FileDependencyObject) dependencyObjectsCache.get(changedFile.getPath());
+				
+				//Modified or deleted file
 				} else {
-					ObjFile addedFileReference = new ObjFileDAO().findAddedFileByPathUntilEntry(analysis.getProject(), changedFile.getEntry(), changedFile.getPath());
-					if(addedFileReference == null){
-						dependencyObject = null;
-					} else {
-						latestFileStampAssigned++;
-
-						dependencyObject = new FileDependencyObject();
-						dependencyObject.setAnalysis(analysis);
-						dependencyObject.setFile(changedFile);
-						dependencyObject.setFilePath(changedFile.getPath());
-						dependencyObject.setAssignedStamp(latestFileStampAssigned);
+					
+					//Search database for matching FileDependencyObject 
+					dependencyObject = 
+						dependencyObjDAO.findDependencyObjectByFilePath(
+								analysis, changedFile.getPath());
+					
+					if (dependencyObject == null){
+						ObjFile addedFileReference = 
+							new ObjFileDAO().findAddedFileByPathUntilEntry(
+									analysis.getProject(), 
+									changedFile.getEntry(), 
+									changedFile.getPath());
 						
-						dependencyObjDAO.insert(dependencyObject);
-						dependencyObjectsCache.put(changedFile.getPath(), dependencyObject);
-						dependencyObjectsCache.put("\\u0F"+latestFileStampAssigned, dependencyObject);
-					}
+						if(addedFileReference != null){
+							latestFileStampAssigned++;
 
+							dependencyObject = new FileDependencyObject();
+							dependencyObject.setAnalysis(analysis);
+							dependencyObject.setFile(changedFile);
+							dependencyObject.setFilePath(changedFile.getPath());
+							dependencyObject.setAssignedStamp(latestFileStampAssigned);
+							
+							dependencyObjDAO.insert(dependencyObject);
+						}
+					}
 				}
 				
 				if(dependencyObject != null){
-					dependencyObjectVector.add(dependencyObject);
+					dependencyObjectList.add(dependencyObject);
 				}
 			}
 		}
 
-		//Set dependents for each dependency object
-		for (int i = 0; i < dependencyObjectVector.size(); i++) {
-			Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
-			for (int j = i; j < dependencyObjectVector.size(); j++) {
-				dependenciesMap.put(dependencyObjectVector.get(j), 1);
+		//Builds the set of DependencySets
+		for (int i = 0; i < dependencyObjectList.size(); i++) {
+			
+			Map<FileDependencyObject, Integer> dependenciesMap = 
+				new HashMap<FileDependencyObject, Integer>();
+			
+			for (int j = i; j < dependencyObjectList.size(); j++) {
+				dependenciesMap.put(dependencyObjectList.get(j), 1);
 			}
 			
-			DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
-			dependencySet.setDependedObject(dependencyObjectVector.get(i));
+			DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = 
+				new DependencySet<FileDependencyObject, FileDependencyObject>();
+			dependencySet.setDependedObject(dependencyObjectList.get(i));
 			dependencySet.setDependenciesMap(dependenciesMap);
-			dependenciesSet.add(dependencySet);
+			setOfDependencySets.add(dependencySet);
 		}
 		
-		return dependenciesSet;
+		return setOfDependencySets;
 	}
 	
 	private Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> gatherTasksAssignment(List<ObjFile> changedFiles, Author author, Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies) throws DatabaseException {
@@ -268,10 +273,6 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 				if(dependencyObjectsCache.containsKey("\\u0A"+j)){
 					dependentAuthor = (AuthorDependencyObject) dependencyObjectsCache.get("\\u0A"+j);
 				} else {
-					System.out.println("PROCUREI: "+j);
-					for (String string : dependencyObjectsCache.keySet()) {
-						System.out.println(string);
-					}
 					dependentAuthor = null;
 				}
 				

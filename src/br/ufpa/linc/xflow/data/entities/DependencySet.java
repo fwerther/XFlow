@@ -3,14 +3,16 @@ package br.ufpa.linc.xflow.data.entities;
 import java.util.Map;
 
 import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKeyJoinColumn;
 
 @Entity(name = "dependency_set")
 public class DependencySet<Dependable extends DependencyObject, Dependent extends DependencyObject> {
@@ -20,7 +22,7 @@ public class DependencySet<Dependable extends DependencyObject, Dependent extend
 	@Column(name = "DEPENDENCYSET_ID")
 	public long id;
 	
-	@ManyToOne(cascade = CascadeType.ALL, targetEntity = DependencyObject.class)
+	@ManyToOne(cascade = {CascadeType.MERGE,CascadeType.REMOVE}, targetEntity = DependencyObject.class)
 	@JoinColumn(name = "DEPENDED_OBJECT_ID")
 	private Dependable dependedObject;
 
@@ -28,27 +30,12 @@ public class DependencySet<Dependable extends DependencyObject, Dependent extend
 	@JoinColumn(name = "DEPENDENCY_ID")
 	private Dependency<Dependable, Dependent> associatedDependency;
 	
-	
-//	@ElementCollection(targetClass = Long.class)
-//	@JoinTable(name="DEPENDENT_OBJECT_DEPENDENCIES", 
-//			joinColumns = @JoinColumn(name="DEPENDENT_OBJECT"),
-//			inverseJoinColumns = @JoinColumn(name="DEPENDENCIES")
-//	)
-//	@javax.persistence.MapKeyClass(value = DependencyObject.class)
-//	@javax.persistence.MapKey(name = "id")
-	
-//	@OneToMany(targetEntity = DependencyObject.class)
-//	@JoinTable(name="DEPENDENT_OBJECT_DEPENDENCIES", 
-//			joinColumns = @JoinColumn(name="DEPENDENT_OBJECT"),
-//			inverseJoinColumns = @JoinColumn(name="DEPENDENCIES")
-//	)
-//	@MapKeyColumn(name = "DEPENDENCY_SET")
-//	@javax.persistence.MapKeyClass(value = Long.class)
-	@javax.persistence.ElementCollection(targetClass = Integer.class)
-	@JoinTable(name = "DEPENDENT_OBJECT_DEPENDENCIES", 
+	//See http://download.oracle.com/javaee/6/api/javax/persistence/MapKeyJoinColumn.html
+	@ElementCollection(targetClass = Integer.class)
+	@CollectionTable(name = "DEPENDENT_OBJECT_DEPENDENCIES", 
 	    joinColumns = @JoinColumn(name = "DEPENDENCY_SET_ID"))
-	@org.hibernate.annotations.MapKey(targetElement = DependencyObject.class, 
-	    columns = @Column(name = "DEPENDENCY_OBJECT"))
+	@MapKeyJoinColumn(name="dependency_object", 
+			referencedColumnName = "DEPENDENCY_OBJECT_ID")
 	@Column(name = "DEPENDENCY_DEGREE")
 	private Map<DependencyObject, Integer> dependenciesMap;
 

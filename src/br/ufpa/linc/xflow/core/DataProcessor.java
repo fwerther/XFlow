@@ -48,7 +48,7 @@ import br.ufpa.linc.xflow.util.Filter;
 public final class DataProcessor {
 
 	public static final void processEntries(final Analysis analysis, final Filter filter) throws DatabaseException{
-		
+		EntryDAO entryDAO = new EntryDAO();
 		final DependenciesIdentifier[] contexts;
 
 		switch (analysis.getType()) {
@@ -61,21 +61,26 @@ public final class DataProcessor {
 			contexts = null;
 		}
 
-		final List<Entry> entries;
+		final List<Long> revisions;
+
+
 		if(analysis.isTemporalConsistencyForced()){
-			entries = new EntryDAO().getAllEntriesWithinEntries(analysis.getFirstEntry(), analysis.getLastEntry());
+			//Retrieving all entries is crazy, so we just look for revision numbers
+			revisions = entryDAO.getAllRevisionsWithinEntries(analysis.getFirstEntry(), analysis.getLastEntry());
 		}
 		else{
-			entries = new EntryDAO().getAllEntriesWithinRevisions(analysis.getProject(), analysis.getFirstEntry().getRevision(), analysis.getLastEntry().getRevision());
+			//Same from above
+			revisions = entryDAO.getAllRevisionsWithinRevisions(analysis.getProject(), analysis.getFirstEntry().getRevision(), analysis.getLastEntry().getRevision());
 		}
 		 
 		for (int i = 0; i < contexts.length; i++) {
-			contexts[i].dataCollect(entries, analysis, filter);
+			contexts[i].dataCollect(revisions, analysis, filter);
 		}
 	}
 	
 	public static final void resumeProcess(final Analysis analysis, final long finalRevision, final Filter filter, final String details) throws DatabaseException{
 		
+		EntryDAO entryDAO = new EntryDAO();
 		final DependenciesIdentifier[] contexts;
 
 		switch (analysis.getType()) {
@@ -88,22 +93,22 @@ public final class DataProcessor {
 			contexts = null;
 		}
 
-		final List<Entry> entries;
+		final List<Long> revisions;
 		if(analysis.isTemporalConsistencyForced()){
-			long previousLastEntrySequence = new EntryDAO().findEntrySequence(analysis.getProject(), analysis.getLastEntry());
-			Entry initialEntry = new EntryDAO().findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
-			Entry finalEntry = new EntryDAO().findEntryFromSequence(analysis.getProject(), finalRevision);
-			entries = new EntryDAO().getAllEntriesWithinEntries(initialEntry, finalEntry);
+			long previousLastEntrySequence = entryDAO.findEntrySequence(analysis.getProject(), analysis.getLastEntry());
+			Entry initialEntry = entryDAO.findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
+			Entry finalEntry = entryDAO.findEntryFromSequence(analysis.getProject(), finalRevision);
+			revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry);
 			analysis.setLastEntry(finalEntry);
 		}
 		else{
-			entries = new EntryDAO().getAllEntriesWithinRevisions(analysis.getProject(), analysis.getLastEntry().getRevision()+1, finalRevision);
-			Entry finalEntry = new EntryDAO().findEntryFromRevision(analysis.getProject(), finalRevision);
+			revisions = entryDAO.getAllRevisionsWithinRevisions(analysis.getProject(), analysis.getLastEntry().getRevision()+1, finalRevision);
+			Entry finalEntry = entryDAO.findEntryFromRevision(analysis.getProject(), finalRevision);
 			analysis.setLastEntry(finalEntry);
 		}
 		 
 		for (int i = 0; i < contexts.length; i++) {
-			contexts[i].dataCollect(entries, analysis, filter);
+			contexts[i].dataCollect(revisions, analysis, filter);
 		}
 		
 		if(!details.equals(analysis.getDetails())){
@@ -115,6 +120,7 @@ public final class DataProcessor {
 	
 	public static final void resumeProcess(final Analysis analysis, final Entry finalEntry, final Filter filter, final String details) throws DatabaseException{
 		
+		EntryDAO entryDAO = new EntryDAO();
 		DependenciesIdentifier[] contexts = null;
 		
 		switch (analysis.getType()) {
@@ -127,15 +133,17 @@ public final class DataProcessor {
 			contexts = null;
 		}
 		
-		long previousLastEntrySequence = new EntryDAO().findEntrySequence(analysis.getProject(), analysis.getLastEntry());
-		Entry initialEntry = new EntryDAO().findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
-		List<Entry> entries = new EntryDAO().getAllEntriesWithinEntries(initialEntry, finalEntry);
+		long previousLastEntrySequence = entryDAO.findEntrySequence(analysis.getProject(), analysis.getLastEntry());
+		Entry initialEntry = entryDAO.findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
+		List<Long> revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry);
 		
 		for (int i = 0; i < contexts.length; i++) {
-			contexts[i].dataCollect(entries, analysis, filter);
+			contexts[i].dataCollect(revisions, analysis, filter);
 		}
 		
-		analysis.setLastEntry(entries.get(entries.size()-1));
+		Long lastRevision = revisions.get(revisions.size()-1);
+		Entry lastEntry = entryDAO.findEntryFromRevision(analysis.getProject(), lastRevision);
+		analysis.setLastEntry(lastEntry);
 		
 		if(!details.equals(analysis.getDetails())){
 			analysis.setDetails(details);

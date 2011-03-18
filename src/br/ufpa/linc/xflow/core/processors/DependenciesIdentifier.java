@@ -43,6 +43,6 @@ import br.ufpa.linc.xflow.util.Filter;
 
 public interface DependenciesIdentifier {
 
-	public void dataCollect(List<Entry> entries, Analysis analysis, Filter filter) throws DatabaseException;
+	public void dataCollect(List<Long> revisions, Analysis analysis, Filter filter) throws DatabaseException;
 	
 }

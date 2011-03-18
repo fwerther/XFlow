@@ -68,7 +68,6 @@ public abstract class BaseDAO<Entity> {
 
 			return false;
 		}
-
 		return true;
 	}
 
@@ -112,8 +111,6 @@ public abstract class BaseDAO<Entity> {
 
 			return false;
 		}
-
-		manager.clear();
 		return true;
 	}
 

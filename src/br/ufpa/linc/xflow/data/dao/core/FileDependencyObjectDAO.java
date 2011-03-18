@@ -3,6 +3,7 @@ package br.ufpa.linc.xflow.data.dao.core;
 import java.util.Collection;
 import java.util.List;
 
+import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
@@ -135,6 +136,34 @@ public class FileDependencyObjectDAO extends DependencyObjectDAO<FileDependencyO
 			return null;
 		}
 		return dependencyObjects.get(0);
+	}
+	
+
+	public List<String> getFilePathsOrderedByStamp(final Analysis analysis) throws DatabaseException {
+		final String query = "SELECT dep.filePath from file_dependency dep " +
+				"where dep.analysis = :analysis order by dep.assignedStamp";
+
+		final Object[] parameter1 = new Object[]{"analysis", analysis};
+		
+		final List<String> dependencyObjects = 
+			(List<String>) findObjectsByQuery(query, parameter1);
+		
+		return dependencyObjects;
+	}
+
+	public FileDependencyObject findDependencyObjectByFilePath (
+			CoChangesAnalysis analysis, String path) throws DatabaseException {
+		final String query = "SELECT dep from file_dependency dep where " +
+				"dep.analysis = :analysis and dep.filePath = :path";
+		final Object[] parameter1 = new Object[]{"analysis", analysis};
+		final Object[] parameter2 = new Object[]{"path", path};
+		
+		Collection<FileDependencyObject> listFileDependencyObject = 
+			findByQuery(FileDependencyObject.class, query, parameter1, 
+					parameter2);
+		
+		return listFileDependencyObject.isEmpty() ? 
+				null : listFileDependencyObject.iterator().next();
 	}
 
 }

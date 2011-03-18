@@ -346,11 +346,13 @@ public class TreeMapNewLayout {
 	}
 	
 	public void mapFilesSequenceVisibility(String revision) throws DatabaseException {
+		/**
 		List<String> filesChangedOnSequenceRevision = new ObjFileDAO().getFilesPathFromSequenceNumber(TreeMapView.getCurrentAnalysis().getProject(), Long.parseLong(revision));
 		StringBuilder highlightFilesQuery = new StringBuilder();
 		for (String filePath : filesChangedOnSequenceRevision) {
 			highlightFilesQuery.append(filePath+" | ");
 		}
 		this.getFilesSequenceSearchPanel().setQuery(highlightFilesQuery.toString());
+		*/
 	}
 }

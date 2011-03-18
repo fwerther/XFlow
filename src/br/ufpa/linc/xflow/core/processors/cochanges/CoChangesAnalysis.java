@@ -124,7 +124,7 @@ public final class CoChangesAnalysis extends Analysis {
 		}
 		
 		if(matrixCache == null){
-			matrix = processHistoricalEntryDependencyMatrix(entry, dependency);
+			matrix = processHistoricalDependencyMatrix(dependency);
 			matrixCache = matrix;
 			dependencyCache = dependency;
 		}
@@ -155,7 +155,7 @@ public final class CoChangesAnalysis extends Analysis {
 		}
 		
 		if(matrixCache == null){
-			matrix = processHistoricalEntryDependencyMatrix(entry, dependency);
+			matrix = processHistoricalDependencyMatrix(dependency);
 			matrixCache = matrix;
 			dependencyCache = dependency;
 			graphCache = JUNGGraph.convertMatrixToJUNGGraph(matrix, dependency);
@@ -185,7 +185,7 @@ public final class CoChangesAnalysis extends Analysis {
 		}
 		
 		if(matrixCache == null){
-			matrix = processHistoricalEntryDependencyMatrix(entryDependency);
+			matrix = processHistoricalDependencyMatrix(entryDependency);
 			matrixCache = matrix;
 			dependencyCache = entryDependency;
 			graphCache = JUNGGraph.convertMatrixToJUNGGraph(matrix, entryDependency);
@@ -202,20 +202,7 @@ public final class CoChangesAnalysis extends Analysis {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public final Matrix processHistoricalEntryDependencyMatrix(final Entry entry, final Dependency dependency) throws DatabaseException {
-		
-		if(!dependency.getDependencies().isEmpty()){
-			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
-			final Matrix matrix = Converter.convertDependenciesToMatrixNew(dependencies, false);
-			return matrix;
-		}
-		else{
-			return matrixCache;
-		}
-	}
-	
-	@SuppressWarnings("rawtypes")
-	public final Matrix processHistoricalEntryDependencyMatrix(final Dependency dependency) throws DatabaseException {
+	public final Matrix processHistoricalDependencyMatrix(final Dependency dependency) throws DatabaseException {
 		
 		if(!dependency.getDependencies().isEmpty()){
 			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
@@ -238,7 +225,4 @@ public final class CoChangesAnalysis extends Analysis {
 			return new Matrix(0);
 		}
 	}
-
-
-
 }

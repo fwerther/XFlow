@@ -6,6 +6,7 @@ import java.util.List;
 import br.ufpa.linc.xflow.data.dao.BaseDAO;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Dependency;
+import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
 public class DependencyDAO extends BaseDAO<Dependency> {
@@ -54,7 +55,7 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 		return findUnique(Dependency.class, query, parameter1, parameter2, parameter3);
 	}
 	
-	public Dependency<AuthorDependencyObject, AuthorDependencyObject> findHighestDependencyByEntry(final long analysisID, final long entryID, final int dependencyType) throws DatabaseException {
+	public Dependency findHighestDependencyByEntry(final long analysisID, final long entryID, final int dependencyType) throws DatabaseException {
 		final String entryQuery = "select MAX(d.associatedEntry.id) from dependency d where d.associatedAnalysis.id = :analysisID and d.type = :dependencyType and d.associatedEntry.id <= :entryID";
 		
 		final Object[] parameter1 = new Object[]{"analysisID", analysisID};
@@ -62,9 +63,7 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 		final Object[] parameter3 = new Object[]{"dependencyType", dependencyType};
 		
 		Long foundEntry = getLongValueByQuery(entryQuery, parameter1, parameter2, parameter3);
-		System.out.println(foundEntry);
-		
-		
+	
 		final String subquery = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID and dep.type = :dependencyType and dep.associatedEntry.id = "+foundEntry;
 		return findUnique(Dependency.class, subquery, parameter1, parameter3);
 	}

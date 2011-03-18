@@ -69,14 +69,14 @@ public class JCustomSearchPanel extends JSearchPanel {
 			try {
 				//TODO: CORRIGIR! ATÉ QUARTA!!
 				if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
-					filePaths = new ObjFileDAO().getFilesPathFromSequenceNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
+					//filePaths = new ObjFileDAO().getFilesPathFromSequenceNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
 				} else {
-					filePaths = new ObjFileDAO().getFilesPathFromRevisionNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
+					//filePaths = new ObjFileDAO().getFilesPathFromRevisionNumber(AbstractVisualization.getCurrentAnalysis().getProject(), Long.parseLong(query));
 				}
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
-			} catch (DatabaseException e) {
-				e.printStackTrace();
+			//} catch (DatabaseException e) {
+			//	e.printStackTrace();
 			}
 			fileChangeRate = new HashMap<String, Integer>();
         	StringBuilder filesName = new StringBuilder();

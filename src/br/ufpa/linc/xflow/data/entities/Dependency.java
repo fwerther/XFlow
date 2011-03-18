@@ -13,6 +13,7 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
@@ -37,7 +38,7 @@ public abstract class Dependency<Dependable extends DependencyObject, Dependents
 	@JoinColumn(name = "ENTRY_ID", nullable = false)
 	private Entry associatedEntry;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "ANALYSIS_ID", nullable = false)
 	private Analysis associatedAnalysis;
 	
@@ -61,6 +62,9 @@ public abstract class Dependency<Dependable extends DependencyObject, Dependents
 
 	public void setDependencies(Set<DependencySet<Dependable, Dependents>> dependencies) {
 		this.dependencies = dependencies;
+		for (DependencySet<Dependable, Dependents> dependencySet : dependencies) {
+			dependencySet.setAssociatedDependency(this);
+		}
 	}
 
 	public Set<DependencySet<Dependable, Dependents>> getDependencies() {

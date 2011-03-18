@@ -45,27 +45,24 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
-
-import org.hibernate.annotations.IndexColumn;
 
 @Entity(name = "entry")
 public class Entry {
 
 	@Id
 	@Column(name = "ENTRY_ID")
-	@IndexColumn(name="ENTRY")
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 	
 	@Column(name = "ENTRY_REV", nullable = false)
 	private long revision;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "ENTRY_PROJECT", nullable = false)
 	private Project project;
 	
@@ -73,7 +70,7 @@ public class Entry {
 	@Column(name = "ENTRY_DATE", nullable = false)
 	private Date date;
 	
-	@OneToOne
+	@ManyToOne
 	@JoinColumn(name = "ENTRY_AUTHOR", nullable = false)
 	private Author author;
 	

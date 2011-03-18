@@ -108,9 +108,9 @@ public class AuthorDAO extends BaseDAO<Author>{
 	}
 
 	public final Author findAuthorByName(final Project project, final String name) throws DatabaseException {
-		final String query = "SELECT a FROM author a WHERE a.name = :name and a.project = :project";
+		final String query = "SELECT a FROM author a WHERE a.name = :name and a.project.id = :project";
 		final Object[] parameter1 = new Object[]{"name", name};
-		final Object[] parameter2 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		
 		return findUnique(Author.class, query, parameter1, parameter2);
 	}

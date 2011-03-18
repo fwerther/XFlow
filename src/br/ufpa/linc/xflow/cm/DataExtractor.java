@@ -42,6 +42,7 @@ import br.ufpa.linc.xflow.cm.connectivity.SVNAccess;
 import br.ufpa.linc.xflow.cm.info.Commit;
 import br.ufpa.linc.xflow.cm.transformations.EntriesTransformer;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
+import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
 import br.ufpa.linc.xflow.exception.cm.svn.SVNProtocolNotSupportedException;
@@ -66,7 +67,7 @@ public class DataExtractor {
 		final long revisionsInterval = 1 + endRevision - startRevision;
 
 		if(revisionsInterval < 10){
-			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);
+			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);			
 			transformer.transformData(project, dataCollected);
 			project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 		}
@@ -77,6 +78,10 @@ public class DataExtractor {
 					transformer.transformData(project, dataCollected);
 					project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 				}
+				//FIXME:
+				//As we don't have an application layer yet, it is necessary 
+				//to frequently clear the persistence context to avoid memory issues
+				DatabaseManager.getDatabaseSession().clear();
 			}
 			if(((revisionsInterval%10) > 0) && (!processCanceled)){
 				final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/10)*10), endRevision);

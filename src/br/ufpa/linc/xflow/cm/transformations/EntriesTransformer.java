@@ -41,6 +41,7 @@ import br.ufpa.linc.xflow.cm.info.Commit;
 import br.ufpa.linc.xflow.cm.transformations.artifact.ArtifactTransformer;
 import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
@@ -96,7 +97,7 @@ public class EntriesTransformer {
 			for (Artifact node : commit.getArtifacts()) {
 				if(node.getArtifactKind().equals("FILE")){
 					ObjFile file = artifactTransformer.gatherArtifactInfo(node);
-					currentlyProcessedEntry.getEntryFiles().add(file);
+					new ObjFileDAO().insert(file);
 				} else {
 					artifactTransformer.gatherFolderInfo(node);
 				}
