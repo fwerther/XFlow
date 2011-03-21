@@ -40,6 +40,14 @@ public class Matrix {
 		return this.sparseMatrix.getRows();
 	}
 	
+	public boolean hasRow(int row){
+		return this.sparseMatrix.hasRow(row);
+	}
+	
+	public boolean hasColumn(int column){
+		return this.sparseMatrix.hasColumn(column);
+	}
+	
 	public int getColumns(){
 		return this.sparseMatrix.getColumns();
 	}

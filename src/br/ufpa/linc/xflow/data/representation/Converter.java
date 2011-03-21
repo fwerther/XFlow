@@ -26,62 +26,62 @@ public final class Converter {
 	/*
 	 * LIST<DependencyObject> TO MATRIX
 	 */
-	
-	public static Matrix convertDependenciesToMatrixNew(List<DependencySet> dependencies, boolean isDependencyDirected) {
-		Matrix matrix = new Matrix(1);
-		convertDependenciesToMatrixNew(dependencies, isDependencyDirected, matrix);
-		
-		return matrix;
-	}
-	
-	private static void convertDependenciesToMatrixNew(List<DependencySet> dependencies, boolean isDependencyDirected, Matrix matrix) {
+	public static Matrix convertDependenciesToMatrix(List<DependencySet> dependencies, boolean isDependencyDirected) {
 
-		Matrix resultMatrix = new Matrix(matrix.getRows(), matrix.getColumns());
+		Matrix matrix = new Matrix();
 
 		if(isDependencyDirected){
 			for (DependencySet dependencySet : dependencies) {
-				if(dependencySet.getDependedObject().getAssignedStamp() > (resultMatrix.getRows()-1)){
-					resultMatrix = resultMatrix.incrementMatrixRowsTo(dependencySet.getDependedObject().getAssignedStamp()+1);
+				Integer dependedObjectStamp = dependencySet.getDependedObject().getAssignedStamp();
+				if(!matrix.hasRow(dependedObjectStamp)){
+					matrix.incrementMatrixRowsTo(dependedObjectStamp + 1);
 				}
-				if(dependencySet.getDependedObject().getAssignedStamp() > (resultMatrix.getColumns()-1)){
-					resultMatrix = resultMatrix.incrementMatrixColumnsTo(dependencySet.getDependedObject().getAssignedStamp()+1);
+				if(!matrix.hasColumn(dependedObjectStamp)){
+					matrix.incrementMatrixColumnsTo(dependedObjectStamp + 1);
 				}
 
 				Set<DependencyObject> dependentObjects = dependencySet.getDependenciesMap().keySet();
 				for (DependencyObject dependentObject : dependentObjects) {
-					if(dependentObject.getAssignedStamp() > (resultMatrix.getColumns()-1)){
-						resultMatrix = resultMatrix.incrementMatrixColumnsTo(dependentObject.getAssignedStamp()+1);
+					Integer dependentObjectStamp = dependentObject.getAssignedStamp();
+					if(!matrix.hasColumn(dependentObjectStamp)){
+						matrix.incrementMatrixColumnsTo(dependentObjectStamp + 1);
 					}
-					
-					resultMatrix.increment((Integer) dependencySet.getDependenciesMap().get(dependentObject), dependencySet.getDependedObject().getAssignedStamp(), dependentObject.getAssignedStamp());
+					Integer dependencyDegree = (Integer) dependencySet.getDependenciesMap().get(dependentObject);
+					matrix.increment(dependencyDegree, dependedObjectStamp, dependentObjectStamp);
 				}
 			}
 		}
 		else{
 			for (DependencySet dependencySet : dependencies) {
-				if(dependencySet.getDependedObject().getAssignedStamp() > (resultMatrix.getRows()-1)){
-					resultMatrix = resultMatrix.incrementMatrixRowsTo(dependencySet.getDependedObject().getAssignedStamp()+1);
+				Integer dependedObjectStamp = dependencySet.getDependedObject().getAssignedStamp();
+				if(!matrix.hasRow(dependedObjectStamp)){
+					matrix.incrementMatrixRowsTo(dependedObjectStamp + 1);
 				}
-				if(dependencySet.getDependedObject().getAssignedStamp() > (resultMatrix.getColumns()-1)){
-					resultMatrix = resultMatrix.incrementMatrixColumnsTo(dependencySet.getDependedObject().getAssignedStamp()+1);
+				if(!matrix.hasColumn(dependedObjectStamp)){
+					matrix.incrementMatrixColumnsTo(dependedObjectStamp + 1);
 				}
 
 				Set<DependencyObject> dependentObjects = dependencySet.getDependenciesMap().keySet();
 				for (DependencyObject dependentObject : dependentObjects) {
-					if(dependentObject.getAssignedStamp() > (resultMatrix.getRows()-1)){
-						resultMatrix = resultMatrix.incrementMatrixRowsTo(dependentObject.getAssignedStamp()+1);
+					Integer dependentObjectStamp = dependentObject.getAssignedStamp();
+					if(!matrix.hasRow(dependentObjectStamp)){
+						matrix.incrementMatrixRowsTo(dependentObjectStamp + 1);
 					}
-					if(dependentObject.getAssignedStamp() > (resultMatrix.getColumns()-1)){
-						resultMatrix = resultMatrix.incrementMatrixColumnsTo(dependentObject.getAssignedStamp()+1);
+					if(!matrix.hasColumn(dependentObjectStamp)){
+						matrix.incrementMatrixColumnsTo(dependentObjectStamp + 1);
 					}
 					
-					resultMatrix.increment((Integer) dependencySet.getDependenciesMap().get(dependentObject), dependencySet.getDependedObject().getAssignedStamp(), dependentObject.getAssignedStamp());
-					resultMatrix.increment((Integer) dependencySet.getDependenciesMap().get(dependentObject), dependentObject.getAssignedStamp(), dependencySet.getDependedObject().getAssignedStamp());
+					Integer dependencyDegree = (Integer) dependencySet.getDependenciesMap().get(dependentObject);
+					matrix.increment(dependencyDegree, dependedObjectStamp, dependentObjectStamp);
+					
+					if (dependedObjectStamp != dependentObjectStamp){
+						matrix.increment(dependencyDegree, dependentObjectStamp, dependedObjectStamp);
+					}
 				}
 			}
 		}
 
-		matrix.setSparseMatrix(resultMatrix.getSparseMatrix());
+		return matrix;
 	}
 
 

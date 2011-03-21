@@ -30,11 +30,15 @@ public class DependencySetDAO extends BaseDAO<DependencySet> {
 	}
 
 	public List<DependencySet> getAllDependenciesSetUntilDependency(Dependency dependency) throws DatabaseException {
-		final String query = "SELECT dependencySet FROM dependency_set dependencySet WHERE dependencySet.associatedDependency.id <= :associatedDependencyID AND dependencySet.associatedDependency.associatedAnalysis.id = :associatedAnalysisID";
+		final String query = "SELECT dependencySet FROM dependency_set " +
+				"dependencySet WHERE dependencySet.associatedDependency.id <= :associatedDependencyID " +
+				"AND dependencySet.associatedDependency.associatedAnalysis.id = :associatedAnalysisID " +
+				"AND dependencySet.associatedDependency.type = :dependencyType";
 		final Object[] parameter1 = new Object[]{"associatedDependencyID", dependency.getId()};
 		final Object[] parameter2 = new Object[]{"associatedAnalysisID", dependency.getAssociatedAnalysis().getId()};
+		final Object[] parameter3 = new Object[]{"dependencyType", dependency.getType()};
 		
-		return (List<DependencySet>) findByQuery(DependencySet.class, query, parameter1, parameter2);
+		return (List<DependencySet>) findByQuery(DependencySet.class, query, parameter1, parameter2, parameter3);
 	}
 	
 	public List<DependencySet> getAllDependenciesSetByDependency(Dependency dependency) throws DatabaseException {

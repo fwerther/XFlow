@@ -234,4 +234,12 @@ public class SparseMatrix {
 		}
 		return compatible;
 	}
+	
+	public boolean hasRow(int row){
+		return row < this.rows ? true : false;
+	}
+	
+	public boolean hasColumn(int column){
+		return column < this.columns ? true : false;
+	}
 }

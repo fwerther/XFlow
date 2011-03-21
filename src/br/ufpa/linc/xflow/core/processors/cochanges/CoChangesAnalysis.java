@@ -206,7 +206,7 @@ public final class CoChangesAnalysis extends Analysis {
 		
 		if(!dependency.getDependencies().isEmpty()){
 			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
-			final Matrix matrix = Converter.convertDependenciesToMatrixNew(dependencies, false);
+			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencies, false);
 			return matrix;
 		}
 		else{
@@ -218,8 +218,7 @@ public final class CoChangesAnalysis extends Analysis {
 	public final Matrix processDependencyMatrix(final Dependency dependency) throws DatabaseException {
 		
 		if(!dependency.getDependencies().isEmpty()){
-			final Matrix matrix = Converter.convertDependenciesToMatrixNew(new ArrayList<DependencySet>(dependency.getDependencies()), dependency.isDirectedDependency());
-			return matrix;
+			return Converter.convertDependenciesToMatrix(new ArrayList<DependencySet>(dependency.getDependencies()), dependency.isDirectedDependency());
 		}
 		else {
 			return new Matrix(0);
