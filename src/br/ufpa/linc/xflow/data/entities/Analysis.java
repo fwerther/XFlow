@@ -34,9 +34,7 @@
 package br.ufpa.linc.xflow.data.entities;
 
 import java.util.Date;
-import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
@@ -47,7 +45,6 @@ import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -55,10 +52,6 @@ import javax.persistence.TemporalType;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
 import br.ufpa.linc.xflow.data.representation.matrix.Matrix;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import br.ufpa.linc.xflow.metrics.entry.EntryMetricValues;
-import br.ufpa.linc.xflow.metrics.file.FileMetricValues;
-import br.ufpa.linc.xflow.metrics.project.ProjectMetricValues;
-
 
 @Entity(name = "analysis")
 @Inheritance(strategy=InheritanceType.JOINED)
@@ -103,6 +96,17 @@ public abstract class Analysis {
 
 	@Column(name = "TEMPORAL_CONSISTENCY_FORCED", nullable = false)
 	private boolean temporalConsistencyForced = false;
+	
+	@Column(name = "ANALYSIS_FILE_LIMIT_PER_REVISION", nullable = false)
+	private int maxFilesPerRevision;
+	
+	public final int getMaxFilesPerRevision() {
+		return maxFilesPerRevision;
+	}
+
+	public final void setMaxFilesPerRevision(final int maxFilesPerRevision) {
+		this.maxFilesPerRevision = maxFilesPerRevision;
+	}
 
 	public long getId() {
 		return id;

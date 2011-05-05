@@ -38,7 +38,9 @@ import br.ufpa.linc.xflow.cm.DataExtractor;
 import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
 import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
+import br.ufpa.linc.xflow.core.processors.callgraph.CallGraphAnalysis;
 import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
+import br.ufpa.linc.xflow.core.transactions.SlidingTimeWindowProcessor;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
@@ -50,6 +52,7 @@ import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.exception.persistence.ProjectNameAlreadyExistsException;
 import br.ufpa.linc.xflow.metrics.MetricsEvaluator;
 import br.ufpa.linc.xflow.metrics.cochange.CoChangeCalculator;
+import br.ufpa.linc.xflow.metrics.cochange.StructuralCouplingCalculator;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
 import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
@@ -125,16 +128,6 @@ public class Launcher {
 		}
 	}
 	
-	public Analysis createAnalysis(Project project, int analysisType, String details, boolean temporalConsistencyForced) {
-		Analysis newAnalysis = AnalysisFactory.createAnalysis(analysisType);
-		newAnalysis.setProject(project);
-		newAnalysis.setDetails(details);
-		newAnalysis.setDate(new Date());
-		newAnalysis.setTemporalConsistencyForced(temporalConsistencyForced);
-		
-		return newAnalysis;
-	}
-	
 	public void processProject(Analysis analysis, Filter filter) throws DatabaseException {
 		DataProcessor.processEntries(analysis, filter);
 	}	
@@ -170,15 +163,21 @@ public class Launcher {
 	}
 	
 	public static void main(String[] args) {
-	
+		
+		/**
 		try{
-			Launcher a = new Launcher();
-			CoChangesAnalysis analysis = (CoChangesAnalysis)new AnalysisDAO().findById(Analysis.class, 1L);
+			//CallGraphAnalysis callGraphAnalysis = (CallGraphAnalysis)new AnalysisDAO().findById(Analysis.class, 7L);
+			//StructuralCouplingCalculator couplingCalculator = new StructuralCouplingCalculator();
+			//couplingCalculator.calculate(callGraphAnalysis);
+			
+			CoChangesAnalysis coChangesAnalysis = (CoChangesAnalysis)new AnalysisDAO().findById(Analysis.class, 1L);
 			CoChangeCalculator coChangeCalculator = new CoChangeCalculator();
-			coChangeCalculator.calculate(analysis);
+			coChangeCalculator.calculate(coChangesAnalysis);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
+		*/
+		
 		/**
 		Project p = null;
 	
@@ -193,13 +192,14 @@ public class Launcher {
 			e.printStackTrace();
 		}
 		*/
+		
 		/**
 		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
 		Launcher a = new Launcher();
 		Project p = null;
 		
 		try {
-			p = a.startNewProject("Moenia", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/sourceforge/moenia", AccessFactory.SVN_REPOSITORY, "Moenia (no filter)", true, false);
+			p = a.startNewProject("GW Trunk", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/googlecode/gw_trunk", AccessFactory.SVN_REPOSITORY, "GW Trunk (No filter + source code)", true, false);
 		} catch (ProjectNameAlreadyExistsException e) {
 			e.printStackTrace();
 		} catch (DatabaseException e) {
@@ -207,7 +207,7 @@ public class Launcher {
 		}
 	
 		try {
-			a.downloadProjectData(p, 1, 123, new Filter(".*?"));
+			a.downloadProjectData(p, 1, 1541, new Filter(".*?"));
 		} catch (CMException e1) {
 			e1.printStackTrace();
 		} catch (DatabaseException e1) {
@@ -215,31 +215,44 @@ public class Launcher {
 		}
 		*/
 		
-	/**
+		
+		Launcher a = new Launcher();
+		Project p = null;
+		
 		try {
-			p = new ProjectDAO().findById(Project.class, 3L);
+			p = new ProjectDAO().findById(Project.class, 1L);
 			//a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
-			a.resumeProjectDownload(p, 19441, new Filter(".*?"));
-		} catch (DatabaseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CMException e) {
+			a.resumeProjectDownload(p, 884143, new Filter(".*?\\.java"));
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		/**
+		//Aplicação do Sliding time window algorithm
+		try{
+			SlidingTimeWindowProcessor.process(p, 200);
+		} catch(Exception e){
+			e.printStackTrace();
+		}
 		*/
+		
 		/**
 		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
-		Analysis analysis = a.createAnalysis(p, AnalysisFactory.COCHANGES_ANALYSIS, "Moenia Java code", false);
 		try {
-			AnalysisFactory.startNewCoChangesAnalysis((CoChangesAnalysis) analysis, 1, 13, 0, 0, 0, false);
-			a.processProject(analysis, new Filter(".*?\\.java"));
+			//CoChange
+			//Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - All ASF (*.java)", false, 1, 150000, 0, 0, 13, false);
+			Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - GW Trunk", false, 3, 1541, 0, 0, 0, false);
+			//CallGraph
+			//Analysis analysis = AnalysisFactory.createCallGraphAnalysis(p, "CallGraph - All ASF (*.java)", false, 1, 150000, 13);
+			a.processProject(analysis, new Filter(".*?"));
 		} catch (DatabaseException e) {
 			e.printStackTrace();
 		} catch (AnalysisRangeException e) {
 			e.printStackTrace();
 		}
 		*/
+		
 //		FileMetricModel[] fileMetrics = new FileMetricModel[]{
 //	            new Centrality(), new Betweenness()
 //		};

@@ -106,6 +106,10 @@ public class Entry {
 	public long getId() {
 		return id;
 	}
+	
+	public void setId(long id){
+		this.id = id;
+	}
 
 	public long getRevision() {
 		return revision;
@@ -151,7 +155,7 @@ public class Entry {
 		return entryFiles;
 	}
 	
-	public void setEntryFiles(final ArrayList<ObjFile> modifiedFiles) {
+	public void setEntryFiles(final List<ObjFile> modifiedFiles) {
 		this.entryFiles = modifiedFiles;
 	}
 	
@@ -159,7 +163,7 @@ public class Entry {
 		return entryFolders;
 	}
 	
-	public void setEntryFolders(final ArrayList<Folder> entryFolders) {
+	public void setEntryFolders(final List<Folder> entryFolders) {
 		this.entryFolders = entryFolders;
 	}
 
@@ -170,6 +174,13 @@ public class Entry {
 		}
 		
 		return listOfFiles;
+	}
+	
+	public void addFiles(List<ObjFile> files){
+		if (entryFiles.isEmpty()){
+			entryFiles = new ArrayList<ObjFile>();
+		}
+		entryFiles.addAll(files);
 	}
 	
 }

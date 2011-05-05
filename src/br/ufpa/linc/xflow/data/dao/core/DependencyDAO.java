@@ -69,8 +69,8 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 	}
 	
 	public List<Dependency> findAllDependenciesUntilIt(final Dependency dependency) throws DatabaseException {
-		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis = :analysis and dep.id <= :dependencyID and dep.type = :dependencyType";
-		final Object[] parameter1 = new Object[]{"analysis", dependency.getAssociatedAnalysis()};
+		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID and dep.id <= :dependencyID and dep.type = :dependencyType";
+		final Object[] parameter1 = new Object[]{"analysisID", dependency.getAssociatedAnalysis().getId()};
 		final Object[] parameter2 = new Object[]{"dependencyID", dependency.getId()};
 		final Object[] parameter3 = new Object[]{"dependencyType", dependency.getType()};
 		

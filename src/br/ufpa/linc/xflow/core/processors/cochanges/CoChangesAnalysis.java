@@ -3,20 +3,16 @@ package br.ufpa.linc.xflow.core.processors.cochanges;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
 import br.ufpa.linc.xflow.core.AnalysisFactory;
-import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
-import br.ufpa.linc.xflow.data.dao.core.DependencyObjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencySetDAO;
-import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
+import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
-import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.representation.Converter;
@@ -38,75 +34,18 @@ public final class CoChangesAnalysis extends Analysis {
 	@Transient
 	private JUNGGraph graphCache = null;
 	
-	@Column(name = "ANALYSIS_FILE_LIMIT_PER_REVISION", nullable = false)
-	private int maxFilesPerRevision;
-	
-	public CoChangesAnalysis() {
-		super();
+	public CoChangesAnalysis(){
 		this.setType(AnalysisFactory.COCHANGES_ANALYSIS);
 	}
 	
-	
-	public final int getMaxFilesPerRevision() {
-		return maxFilesPerRevision;
-	}
-
-	public final void setMaxFilesPerRevision(final int maxFilesPerRevision) {
-		this.maxFilesPerRevision = maxFilesPerRevision;
-	}
-
-
-//	public final Matrix calculateCoordinationRequirements(long revision) throws DatabaseException{
-//		MatrixDAO matrixDAO = new MatrixDAO();
-//
-//		CoChangesMatrix taskAssignment = (CoChangesMatrix) matrixDAO.getTaskAssignmentByRevision(this, revision);
-//		CoChangesMatrix taskDependency = (CoChangesMatrix) matrixDAO.getTaskDependencyByRevision(this, revision);
-//
-//		if((taskAssignment.getMatrix()[0].length > 0) && (taskDependency.getMatrix().length > 0)){
-//			taskDependency.applyStatisticalFilters(this.getSupportValue(), this.getConfidenceValue());
-//
-//			Matrix coordReq = taskAssignment.multiply(taskDependency).multiply(taskAssignment.getTransposeMatrix());
-//			coordReq.setAssociatedAnalysis(this);
-//			coordReq.setEntry(taskAssignment.getEntry());
-//			coordReq.setName("Coordination Requirements");
-//			matrixDAO.insert(coordReq);
-//			
-//			return coordReq;
-//		}
-//		
-//		return null;
-//	}
-//
-//	public final Matrix calculateCoordinationRequirements(CoChangesMatrix taskAssignment, CoChangesMatrix taskDependency) throws DatabaseException {
-//
-//		Matrix coordinationRequirements = new CoChangesMatrix();
-//
-//		if((taskAssignment.getMatrix().length > 0) && (taskDependency.getMatrix().length > 0)){
-//
-//			taskDependency.applyStatisticalFilters();
-//			
-//			coordinationRequirements = taskAssignment.multiply(taskDependency);
-//			coordinationRequirements = coordinationRequirements.multiply(coordinationRequirements.getTransposeMatrix());
-//
-//		}
-//
-//		coordinationRequirements.setName("Coordination Requirements");
-//		coordinationRequirements.setAssociatedAnalysis(taskAssignment.getAssociatedAnalysis());
-//		coordinationRequirements.setEntry(taskAssignment.getEntry());
-//		
-//		return coordinationRequirements;
-//	}
-
-	
 	@Override
 	public boolean checkCutoffValues(Entry entry) {
-		if(this.maxFilesPerRevision <= 0) return true;
-		if(entry.getEntryFiles().size() > this.maxFilesPerRevision){
+		if(this.getMaxFilesPerRevision() <= 0) return true;
+		if(entry.getEntryFiles().size() > this.getMaxFilesPerRevision()){
 			return false;
 		}
 		return true;
 	}
-
 
 	@Override
 	@SuppressWarnings("rawtypes")
@@ -205,8 +144,13 @@ public final class CoChangesAnalysis extends Analysis {
 	public final Matrix processHistoricalDependencyMatrix(final Dependency dependency) throws DatabaseException {
 		
 		if(!dependency.getDependencies().isEmpty()){
-			final List<DependencySet> dependencies = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
-			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencies, false);
+			final List<DependencySet> dependencySets = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
+			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencySets, false);
+
+			//FIXME:
+			//As we don't have an application layer yet, it is necessary 
+			//to frequently clear the persistence context to avoid memory issues
+			DatabaseManager.getDatabaseSession().clear();
 			return matrix;
 		}
 		else{

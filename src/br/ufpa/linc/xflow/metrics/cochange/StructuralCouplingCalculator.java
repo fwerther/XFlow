@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 
-import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
+import br.ufpa.linc.xflow.core.processors.callgraph.CallGraphAnalysis;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
 import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.database.DatabaseManager;
@@ -15,9 +15,9 @@ import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.data.representation.matrix.Matrix;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
-public class CoChangeCalculator {
+public class StructuralCouplingCalculator {
 
-	public void calculate(CoChangesAnalysis analysis) throws DatabaseException{
+	public void calculate(CallGraphAnalysis analysis) throws DatabaseException{
 		FileDependencyObjectDAO fileDependencyDAO = 
 			new FileDependencyObjectDAO();
 
@@ -27,15 +27,15 @@ public class CoChangeCalculator {
 		
 		//Builds the Co-Change Matrix
 		Matrix matrix = analysis.processHistoricalDependencyMatrix(lastDependency);
+				
+		List<StructuralCoupling> couplingsList = 
+			getStructuralCouplinsList(analysis,fileDependencyDAO, matrix);
 		
-		List<CoChange> coChangeList = getCoChangeList(analysis,
-				fileDependencyDAO, matrix);
+		System.out.println("Couplings list: " + couplingsList.size());
 		
-		System.out.println("CoChanges list size: " + coChangeList.size());
-		
-		//Persists Co-Changes
-		for(CoChange coChange : coChangeList){
-			insert(coChange);
+		//Persists Couplings
+		for(StructuralCoupling coupling : couplingsList){
+			insert(coupling);
 			DatabaseManager.getDatabaseSession().clear();
 		}
 	}
@@ -52,7 +52,7 @@ public class CoChangeCalculator {
 		return lastDependency; 
 	}
 
-	private List<CoChange> getCoChangeList(CoChangesAnalysis analysis,
+	private List<StructuralCoupling> getStructuralCouplinsList(CallGraphAnalysis analysis,
 			FileDependencyObjectDAO fileDependencyDAO, Matrix matrix)
 			throws DatabaseException {
 		
@@ -60,32 +60,34 @@ public class CoChangeCalculator {
 		List<String> filePathList = 
 			fileDependencyDAO.getFilePathsOrderedByStamp(analysis);
 			
-		//Builds the list of Co-Changes
-		List<CoChange> coChangeList = new ArrayList<CoChange>();
+		//Builds the couplingsList
+		List<StructuralCoupling> couplingsList = new ArrayList<StructuralCoupling>();
 		for (int i = 0; i < matrix.getRows(); i++) {
-			String a = filePathList.get(i);
-			int aChanges = matrix.get(i,i);
+			String supplier = filePathList.get(i);
 			
-			for (int j = i+1; j < matrix.getColumns(); j++) {
-				int support = matrix.get(i,j);
-				
-				if(support > 0){
-					String b = filePathList.get(j);
-					int bChanges = matrix.get(j,j);
+			for (int j = 0; j < matrix.getColumns(); j++) {	
+				if(i != j){
 					
-					coChangeList.add(new CoChange(a, i, b, j, support, aChanges));
-					coChangeList.add(new CoChange(b, j, a, i, support, bChanges));
+					int clientCalls = matrix.get(i,j);
+					int clientChanges = matrix.get(j,j);
+					
+					if(clientCalls > 0){
+						String client = filePathList.get(j);
+						
+						couplingsList.add(new StructuralCoupling(client, j, 
+								supplier, i, clientCalls, clientChanges));
+					}			
 				}
 			}
 		}
-		return coChangeList;
+		return couplingsList;
 	}
 	
-	private void insert(CoChange coChange){
+	private void insert(StructuralCoupling coupling){
 		try {
 			EntityManager manager = DatabaseManager.getDatabaseSession();
 			manager.getTransaction().begin();
-			manager.persist(coChange);
+			manager.persist(coupling);
 			manager.getTransaction().commit();
 		} catch (Exception e){
 			e.printStackTrace();

@@ -4,7 +4,9 @@ import java.util.List;
 
 import br.ufpa.linc.xflow.data.dao.BaseDAO;
 import br.ufpa.linc.xflow.data.entities.Dependency;
+import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
+import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
 public class DependencySetDAO extends BaseDAO<DependencySet> {
@@ -47,6 +49,5 @@ public class DependencySetDAO extends BaseDAO<DependencySet> {
 		final Object[] parameter2 = new Object[]{"associatedAnalysisID", dependency.getAssociatedAnalysis().getId()};
 		
 		return (List<DependencySet>) findByQuery(DependencySet.class, query, parameter1, parameter2);
-	}
-	
+	}	
 }

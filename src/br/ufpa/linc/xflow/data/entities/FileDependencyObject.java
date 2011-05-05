@@ -5,6 +5,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
 import org.hibernate.annotations.Index;
@@ -13,7 +14,7 @@ import org.hibernate.annotations.Index;
 @DiscriminatorValue(""+DependencyObject.FILE_DEPENDENCY)
 public class FileDependencyObject extends DependencyObject {
 
-	@OneToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne
 	@JoinColumn(name = "FILE_ID", nullable = false)
 	private ObjFile file;
 	

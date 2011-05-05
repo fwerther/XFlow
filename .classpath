@@ -49,5 +49,6 @@
 	<classpathentry kind="lib" path="lib/Persistence-LIB/Database Connectors/mysql-connector-java-5.1.14-bin.jar"/>
 	<classpathentry kind="lib" path="lib/CM-LIB/sqljet.1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/Presentation-LIB/Prefuse/prefuse.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

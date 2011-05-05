@@ -36,6 +36,7 @@ package br.ufpa.linc.xflow.core;
 import java.util.List;
 
 import br.ufpa.linc.xflow.core.processors.DependenciesIdentifier;
+import br.ufpa.linc.xflow.core.processors.callgraph.CallGraphCollector;
 import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesCollector;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
@@ -56,7 +57,9 @@ public final class DataProcessor {
 		case AnalysisFactory.COCHANGES_ANALYSIS:
 			contexts = new DependenciesIdentifier[]{new CoChangesCollector()};
 			break;
-			
+		case AnalysisFactory.CALLGRAPH_ANALYSIS:
+			contexts = new DependenciesIdentifier[]{new CallGraphCollector()};
+			break;			
 		default:
 			contexts = null;
 		}
@@ -66,11 +69,18 @@ public final class DataProcessor {
 
 		if(analysis.isTemporalConsistencyForced()){
 			//Retrieving all entries is crazy, so we just look for revision numbers
-			revisions = entryDAO.getAllRevisionsWithinEntries(analysis.getFirstEntry(), analysis.getLastEntry());
+			revisions = entryDAO.getAllRevisionsWithinEntries(
+					analysis.getFirstEntry(), 
+					analysis.getLastEntry(), 
+					analysis.getMaxFilesPerRevision());
 		}
 		else{
 			//Same from above
-			revisions = entryDAO.getAllRevisionsWithinRevisions(analysis.getProject(), analysis.getFirstEntry().getRevision(), analysis.getLastEntry().getRevision());
+			revisions = entryDAO.getAllRevisionsWithinRevisions(
+					analysis.getProject(), 
+					analysis.getFirstEntry().getRevision(), 
+					analysis.getLastEntry().getRevision(),
+					analysis.getMaxFilesPerRevision());
 		}
 		 
 		for (int i = 0; i < contexts.length; i++) {
@@ -98,11 +108,11 @@ public final class DataProcessor {
 			long previousLastEntrySequence = entryDAO.findEntrySequence(analysis.getProject(), analysis.getLastEntry());
 			Entry initialEntry = entryDAO.findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
 			Entry finalEntry = entryDAO.findEntryFromSequence(analysis.getProject(), finalRevision);
-			revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry);
+			revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry, analysis.getMaxFilesPerRevision());
 			analysis.setLastEntry(finalEntry);
 		}
 		else{
-			revisions = entryDAO.getAllRevisionsWithinRevisions(analysis.getProject(), analysis.getLastEntry().getRevision()+1, finalRevision);
+			revisions = entryDAO.getAllRevisionsWithinRevisions(analysis.getProject(), analysis.getLastEntry().getRevision()+1, finalRevision, analysis.getMaxFilesPerRevision());
 			Entry finalEntry = entryDAO.findEntryFromRevision(analysis.getProject(), finalRevision);
 			analysis.setLastEntry(finalEntry);
 		}
@@ -135,7 +145,7 @@ public final class DataProcessor {
 		
 		long previousLastEntrySequence = entryDAO.findEntrySequence(analysis.getProject(), analysis.getLastEntry());
 		Entry initialEntry = entryDAO.findEntryFromSequence(analysis.getProject(), (previousLastEntrySequence+1));
-		List<Long> revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry);
+		List<Long> revisions = entryDAO.getAllRevisionsWithinEntries(initialEntry, finalEntry, analysis.getMaxFilesPerRevision());
 		
 		for (int i = 0; i < contexts.length; i++) {
 			contexts[i].dataCollect(revisions, analysis, filter);

@@ -17,7 +17,6 @@ import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
-import br.ufpa.linc.xflow.data.entities.CoordinationRequirements;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
@@ -45,83 +44,70 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 	private int latestAuthorStampAssigned;
 	
 	@Override
-	//5) CONSEGUIR VALOR MÉDIO DE ACOPLAMENTO ESTR. PARA TODOS OS PARES
 	public final void dataCollect(List<Long> revisions, Analysis analysis, Filter filter) throws DatabaseException {
 		this.analysis = (CoChangesAnalysis) analysis;
 		this.filter = filter;
 		initiateCache();
-				
-		System.out.println("** Starting CoChanges analysis **");
-		final int maxFiles = this.analysis.getMaxFilesPerRevision();
 		
 		EntryDAO entryDAO = new EntryDAO();
 		DependencyDAO dependencyDAO = new DependencyDAO();
 		
+		System.out.println("** Starting CoChanges analysis **");
+	
 		for (Long revision : revisions) {
 		
 			final Entry entry = entryDAO.findEntryFromRevision(analysis.getProject(), revision);			
 			System.out.print("- Processing entry: "+entry.getRevision()+" ("+revision+")\n");
-
-			if(entry.getEntryFiles().size() > 0 ){
-				if((entry.getEntryFiles().size() <= maxFiles) || (maxFiles == 0)){
-					System.out.print("* Collecting file dependencies...");
+			System.out.print("* Collecting file dependencies...");
 					
-					final Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies = gatherTaskDependency(entry.getEntryFiles());
-					if(fileDependencies.size() > 0) { 
-						final TaskDependency taskDependency = new TaskDependency();
-						taskDependency.setAssociatedAnalysis(analysis);
-						taskDependency.setAssociatedEntry(entry);
+			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies = gatherTaskDependency(entry.getEntryFiles());
+			if(fileDependencies.size() > 0) { 
+				final TaskDependency taskDependency = new TaskDependency();
+				taskDependency.setAssociatedAnalysis(analysis);
+				taskDependency.setAssociatedEntry(entry);
 	
-						//Sets on both sides (bi-directional association)
-						taskDependency.setDependencies(fileDependencies);
-								
-						dependencyDAO.insert(taskDependency);						
-						System.out.print(" done!\n");
-
-						System.out.print("* Collecting tasks dependencies...");
-						final TaskAssignment taskAssignment = new TaskAssignment();
-						taskAssignment.setAssociatedAnalysis(this.analysis);
-						taskAssignment.setAssociatedEntry(entry);
-						taskAssignment.setDirectedDependency(true);
-						final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> taskDependencies = gatherTasksAssignment(entry.getEntryFiles(), entry.getAuthor(), fileDependencies);
-						for (DependencySet<AuthorDependencyObject, FileDependencyObject> dependencySet : taskDependencies) {
-							dependencySet.setAssociatedDependency(taskAssignment);
-						}
-						taskAssignment.setDependencies(taskDependencies);
-						dependencyDAO.insert(taskAssignment);
-						System.out.print(" done!\n");
-
-						if(this.analysis.isCoordinationRequirementPersisted()){
-							System.out.print("* Calculating coordination requirements...");
-							final CoordinationRequirements coordinationRequirement = new CoordinationRequirements();
-							coordinationRequirement.setAssociatedAnalysis(this.analysis);
-							coordinationRequirement.setAssociatedEntry(entry);
-							coordinationRequirement.setDirectedDependency(false);
-							final Set<DependencySet<AuthorDependencyObject, AuthorDependencyObject>> coordinationDependencies = gatherCoordinationRequirements(taskDependency, taskAssignment);
-							for (DependencySet<AuthorDependencyObject, AuthorDependencyObject> dependencySet : coordinationDependencies) {
-								dependencySet.setAssociatedDependency(coordinationRequirement);
-							}
-							coordinationRequirement.setDependencies(coordinationDependencies);
-							dependencyDAO.insert(coordinationRequirement);
-							System.out.print(" done!\n");
-						}
-					} else {
-						System.out.println("\nSkipped. No dependency collected on specified entry.");
+				//Sets on both sides (bi-directional association)
+				taskDependency.setDependencies(fileDependencies);
+						
+				dependencyDAO.insert(taskDependency);						
+				System.out.print(" done!\n");
+					
+				/**
+				System.out.print("* Collecting tasks dependencies...");
+				final TaskAssignment taskAssignment = new TaskAssignment();
+				taskAssignment.setAssociatedAnalysis(this.analysis);
+				taskAssignment.setAssociatedEntry(entry);
+				taskAssignment.setDirectedDependency(true);
+				final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> taskDependencies = gatherTasksAssignment(entry.getEntryFiles(), entry.getAuthor(), fileDependencies);
+				for (DependencySet<AuthorDependencyObject, FileDependencyObject> dependencySet : taskDependencies) {
+					dependencySet.setAssociatedDependency(taskAssignment);
+				}
+				taskAssignment.setDependencies(taskDependencies);
+				dependencyDAO.insert(taskAssignment);
+				System.out.print(" done!\n");
+				if(this.analysis.isCoordinationRequirementPersisted()){
+					System.out.print("* Calculating coordination requirements...");
+					final CoordinationRequirements coordinationRequirement = new CoordinationRequirements();
+					coordinationRequirement.setAssociatedAnalysis(this.analysis);
+					coordinationRequirement.setAssociatedEntry(entry);
+					coordinationRequirement.setDirectedDependency(false);
+					final Set<DependencySet<AuthorDependencyObject, AuthorDependencyObject>> coordinationDependencies = gatherCoordinationRequirements(taskDependency, taskAssignment);
+					for (DependencySet<AuthorDependencyObject, AuthorDependencyObject> dependencySet : coordinationDependencies) {
+						dependencySet.setAssociatedDependency(coordinationRequirement);
 					}
+					coordinationRequirement.setDependencies(coordinationDependencies);
+					dependencyDAO.insert(coordinationRequirement);
+					System.out.print(" done!\n");
 				}
-				else{
-					System.out.println("* Skipped. Number of files higher than specified parameter.");
-				}
-			}
-			else{
-				System.out.println("* Skipped. No Co-Change info on revision.");
+				*/
+			} else {
+				System.out.println("\nSkipped. No dependency collected on specified entry.");
 			}
 			//FIXME:
 			//As we don't have an application layer yet, it is necessary 
 			//to frequently clear the persistence context to avoid memory issues
 			DatabaseManager.getDatabaseSession().clear();
 		}
-		
 	}
 
 	private void initiateCache() throws DatabaseException {

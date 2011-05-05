@@ -44,6 +44,7 @@ import javax.persistence.Query;
 
 import br.ufpa.linc.xflow.data.dao.BaseDAO;
 import br.ufpa.linc.xflow.data.database.DatabaseManager;
+import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.persistence.AccessDeniedException;
@@ -137,12 +138,42 @@ public class EntryDAO extends BaseDAO<Entry>{
 	}
 	
 	public List<Long> getAllRevisionsWithinRevisions(final Project project, final long startRevision, final long endRevision) throws DatabaseException {
-		final String query = "select e.revision FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision order by e.revision";
+	
+		final String query = 
+			"select e.revision FROM entry e WHERE " +
+			"e.project = :project AND " +
+			"e.revision between :startrevision AND :endrevision " +
+			"ORDER BY e.revision";
+				
 		final Object[] parameter1 = new Object[]{"project", project};
 		final Object[] parameter2 = new Object[]{"startrevision", startRevision};
 		final Object[] parameter3 = new Object[]{"endrevision", endRevision};
 
 		return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);
+	}
+	
+	public List<Long> getAllRevisionsWithinRevisions(final Project project, final long startRevision, final long endRevision, int maxFiles) throws DatabaseException {
+		
+		String query = 
+			"select e.revision FROM entry e WHERE " +
+			"e.project = :project AND " +
+			"e.revision BETWEEN :startrevision AND :endrevision AND " + 
+			"e.entryFiles IS NOT EMPTY";
+			
+		final Object[] parameter1 = new Object[]{"project", project};
+		final Object[] parameter2 = new Object[]{"startrevision", startRevision};
+		final Object[] parameter3 = new Object[]{"endrevision", endRevision};
+		
+		//TODO: Use criteria API
+		if (maxFiles == 0){
+			query = query.concat(" ORDER BY e.revision");
+			return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);	
+		}
+		else{
+			query = query.concat(" AND e.entryFiles.size <= :maxFiles ORDER BY e.revision");
+			final Object[] parameter4 = new Object[]{"maxFiles", maxFiles};	
+			return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3, parameter4);
+		}
 	}
 	
 	
@@ -283,13 +314,26 @@ public class EntryDAO extends BaseDAO<Entry>{
 		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2, parameter3);
 	}
 	
-	public List<Long> getAllRevisionsWithinEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
-		final String query = "SELECT entry.revision FROM entry entry WHERE entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID";
+	public List<Long> getAllRevisionsWithinEntries(final Entry firstEntry, final Entry lastEntry, int maxFiles) throws DatabaseException {
+		String query = "SELECT entry.revision FROM entry entry WHERE " +
+				"entry.project = :project AND " +
+				"entry.id >= :lowestID AND " +
+				"entry.id <= :highestID AND " +
+				"entry.entryFiles IS NOT EMPTY";
+		
 		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject()};
 		final Object[] parameter2 = new Object[]{"lowestID", firstEntry.getId()};
 		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getId()};
 		
-		return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);
+		//TODO: Use Criteria instead of HQL (dynamic query)
+		if (maxFiles == 0){
+			return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3);
+		}
+		else{
+			query = query.concat(" AND entry.entryFiles.size <= :maxFiles");
+			final Object[] parameter4 = new Object[]{"maxFiles", maxFiles};
+			return (List<Long>) findObjectsByQuery(query, parameter1, parameter2, parameter3, parameter4);
+		}
 	}
 
 	public Date getHighestEntryDateByEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
@@ -309,5 +353,16 @@ public class EntryDAO extends BaseDAO<Entry>{
 		
 		return findUnique(Entry.class, query, parameter1, parameter2, parameter3).getDate();	
 	}
-
+	
+	public List<Entry> getNonBlankEntriesByAuthorSortedByDate(final Project project, final Author author) throws DatabaseException{
+		final String query = "SELECT entry FROM entry entry WHERE " +
+				"entry.project.id = :projectID AND " +
+				"entry.author.id = :authorID AND " +
+				"entry.entryFiles IS NOT EMPTY " + 
+				"ORDER BY entry.date";
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
+		
+		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2);
+	}
 }

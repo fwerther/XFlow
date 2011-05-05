@@ -172,4 +172,8 @@ public class ObjFile extends Resource implements Comparable<ObjFile>{
 		}
 		return 1;
 	}
+	
+	public String toString(){
+		return path;
+	}
 }

@@ -12,6 +12,7 @@ public class TaskDependency extends Dependency<FileDependencyObject, FileDepende
 	
 	public TaskDependency(boolean isDirected){
 		super(isDirected);
+		this.setType(TASK_DEPENDENCY);
 	}
 	
 }
