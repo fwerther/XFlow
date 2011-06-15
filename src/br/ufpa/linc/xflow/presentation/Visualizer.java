@@ -1,55 +1,17 @@
-/* 
- * 
- * XFlow
- * _______
- * 
- *  
- *  (C) Copyright 2010, by Universidade Federal do Pará (UFPA), Francisco Santana, Jean Costa, Pedro Treccani and Cleidson de Souza.
- * 
- *  This file is part of XFlow.
- *
- *  XFlow is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  XFlow is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XFlow.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- *  ===============
- *  Visualizer.java
- *  ===============
- *  
- *  Original Author: Francisco Santana;
- *  Contributor(s):  -;
- *  
- */
-
 package br.ufpa.linc.xflow.presentation;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Vector;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
 
 import br.ufpa.linc.xflow.data.dao.metrics.MetricsDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
-import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
+import br.ufpa.linc.xflow.metrics.MetricModel;
 import br.ufpa.linc.xflow.metrics.entry.AddedFiles;
 import br.ufpa.linc.xflow.metrics.entry.DeletedFiles;
 import br.ufpa.linc.xflow.metrics.entry.EntryLOC;
@@ -61,241 +23,126 @@ import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
 import br.ufpa.linc.xflow.metrics.project.ClusterCoefficient;
 import br.ufpa.linc.xflow.metrics.project.Density;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
-import br.ufpa.linc.xflow.presentation.commons.AnalysisInfoPanel;
-import br.ufpa.linc.xflow.presentation.commons.DevelopersPanelControl;
-import br.ufpa.linc.xflow.presentation.commons.util.ColorPalette;
-import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
-import br.ufpa.linc.xflow.presentation.visualizations.activity.ActivityView;
-import br.ufpa.linc.xflow.presentation.visualizations.graph.GraphView;
-import br.ufpa.linc.xflow.presentation.visualizations.line.LineView;
-import br.ufpa.linc.xflow.presentation.visualizations.scatterplot.ScatterPlotView;
-import br.ufpa.linc.xflow.presentation.visualizations.treemap.TreeMapView;
+import br.ufpa.linc.xflow.presentation.view.ProjectViewer;
+import br.ufpa.linc.xflow.presentation.visualizations.Visualization;
+import br.ufpa.linc.xflow.presentation.visualizations.activity.ActivityVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.graph.GraphVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.line.LineVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.scatterplot.ScatterplotVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.treemap.TreemapVisualization;
+
 
 public class Visualizer {
 
-	public static final int LINE_VIEW = 0;
-	public static final int GRAPH_VIEW = 1;
-	public static final int SCATTERPLOT_VIEW = 2;
-	public static final int TREEMAP_VIEW = 3;
-	public static final int ACTIVITY_VIEW = 4;
+	public static final int LINE_VISUALIZATION = 0;
+	public static final int GRAPH_VISUALIZATION = 1;
+	public static final int SCATTERPLOT_VISUALIZATION = 2;
+	public static final int TREEMAP_VISUALIZATION = 3;
+	public static final int ACTIVITY_VISUALIZATION = 4;
 	
-	private boolean[] visibleVisualizations;
+	private static ProjectViewer projectsViewer;
 	
-	private static LineView lineView = null;
-	private static GraphView graphView = null;
-	private static ScatterPlotView scatterPlotView = null;
-	private static TreeMapView treeMapView = null;
-	private static ActivityView activityView = null;
+	public Visualizer(){
+		//Empty constructor.
+	}
 	
-	private static DevelopersPanelControl developersPanel;
-	private static AnalysisInfoPanel analysisInfoBar;
+	public Visualizer(int viewType){
+		this.projectsViewer = ProjectViewer.createInstance(viewType);
+	}
 	
-	private static ProjectMetricModel[] availableProjectMetrics = new ProjectMetricModel[]{
-		new Density(), new ClusterCoefficient()
-	};
-	private static EntryMetricModel[] availableEntryMetrics = new EntryMetricModel[]{
-		new AddedFiles(), new ModifiedFiles(), new DeletedFiles(), new EntryLOC()
-	};
-	private static FileMetricModel[] availableFileMetrics = new FileMetricModel[]{
-		new Centrality(), new Betweenness()
-//		, new EntryLOC()
-	};
 	
-	private static Metrics metricsSession;
-	
-	private JPanel visualizationsPanel;
-	
-	public JPanel composeVisualizationsPane(Metrics metrics) throws DatabaseException{
-		metricsSession = metrics;
-		JTabbedPane visualizationsPlacer = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
-		AbstractVisualization.setCurrentAnalysis(metrics.getAssociatedAnalysis());
-		
-		final List<Author> validAuthors;
-		if(metrics.getAssociatedAnalysis().isTemporalConsistencyForced()){
-			 validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByEntries(metrics.getAssociatedAnalysis().getFirstEntry(), metrics.getAssociatedAnalysis().getLastEntry());
-		} else {
-//			validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByRevisions(metrics.getAssociatedAnalysis().getFirstEntry().getRevision(), metrics.getAssociatedAnalysis().getLastEntry().getRevision());
-			validAuthors = null;
-		}
-		ColorPalette.initiateColors(validAuthors.size());
+	public static ProjectViewer getProjectsViewer() {
+		return projectsViewer;
+	}
 
-		/*
-		 * COMMON CONTROLERS
-		 */
-		analysisInfoBar = new AnalysisInfoPanel(metrics.getAssociatedAnalysis());
-		Component analysisInfoPanel = analysisInfoBar.createInfoPanel();
-		
-		developersPanel = new DevelopersPanelControl(validAuthors);
-		Component developersPane = developersPanel.createControlPanel();
-		
-		
-		/*
-		 * VISUALIZATIONS
-		 */
-		System.out.println("generating line view");
-		if(visibleVisualizations[LINE_VIEW]){
-			lineView = new LineView();
-			JPanel lineViewPanel = lineView.composeVisualizationPanel();
-			visualizationsPlacer.addTab("Line view", lineViewPanel);
+	public static void setProjectsViewer(ProjectViewer projectsViewer) {
+		Visualizer.projectsViewer = projectsViewer;
+	}
+
+	
+	public JComponent composeVisualizations(boolean[] selectedVisualizations, MetricModel[] selectedMetrics, Metrics ... metricsSession) throws DatabaseException{
+		Collection<Visualization> visualizationsRequired = new Vector<Visualization>();
+		for (Metrics metrics : metricsSession) {
+			Collection<Visualization> visualizations = identifySelectedVisualizations(selectedVisualizations, metrics);
+			visualizationsRequired.addAll(visualizations);
 		}
 		
-		System.out.println("generating graph view");
-		if(visibleVisualizations[GRAPH_VIEW]){
-			graphView = new GraphView();
-			JPanel graphViewPanel = graphView.composeVisualizationPanel();
-			visualizationsPlacer.addTab("Graph View", graphViewPanel);
+		Collection<ProjectMetricModel> projectMetrics = new Vector<ProjectMetricModel>();
+		Collection<EntryMetricModel> entryMetrics = new Vector<EntryMetricModel>();
+		Collection<FileMetricModel> fileMetrics = new Vector<FileMetricModel>();
+		for (MetricModel metric : selectedMetrics) {
+			if (metric instanceof ProjectMetricModel) {
+				projectMetrics.add((ProjectMetricModel) metric);
+			} else if (metric instanceof EntryMetricModel) {
+				entryMetrics.add((EntryMetricModel) metric);
+			} else if (metric instanceof FileMetricModel) {
+				fileMetrics.add((FileMetricModel) metric);
+			}
+		}
+		this.projectsViewer.setVisualizations(visualizationsRequired);
+		this.projectsViewer.setMetrics(Arrays.asList(metricsSession));
+		ProjectViewer.setEntryMetrics(entryMetrics.toArray(new EntryMetricModel[]{}));
+		ProjectViewer.setFileMetrics(fileMetrics.toArray(new FileMetricModel[]{}));
+		ProjectViewer.setProjectMetrics(projectMetrics.toArray(new ProjectMetricModel[]{}));
+		
+		return this.projectsViewer.displayVisualizations();
+	}
+
+	private Collection<Visualization> identifySelectedVisualizations(boolean[] selectedVisualizations, Metrics metricsSession) {
+		Collection<Visualization> validVisualizations = new Vector<Visualization>();
+		if(selectedVisualizations[LINE_VISUALIZATION]){
+			validVisualizations.add(new LineVisualization(metricsSession));
+		}
+		if(selectedVisualizations[GRAPH_VISUALIZATION]){
+			validVisualizations.add(new GraphVisualization(metricsSession));
+		}
+		if(selectedVisualizations[SCATTERPLOT_VISUALIZATION]){
+			validVisualizations.add(new ScatterplotVisualization(metricsSession));
+		}
+		if(selectedVisualizations[TREEMAP_VISUALIZATION]){
+			validVisualizations.add(new TreemapVisualization(metricsSession));
+		}
+		if(selectedVisualizations[ACTIVITY_VISUALIZATION]){
+			validVisualizations.add(new ActivityVisualization(metricsSession));
 		}
 		
-		System.out.println("generating scatterplot");
-		if(visibleVisualizations[SCATTERPLOT_VIEW]){
-			scatterPlotView = new ScatterPlotView();
-			JPanel scatterPlotPanel = scatterPlotView.composeVisualizationPanel();
-			visualizationsPlacer.addTab("Scatter Plot View", scatterPlotPanel);
-		}
-		
-		System.out.println("generating treemap");
-		if(visibleVisualizations[TREEMAP_VIEW]){
-			treeMapView = new TreeMapView();
-//			JPanel treeMapPanel = treeMapView.composeVisualizationPanel();
-//			visualizationsPlacer.addTab("Treemap View", treeMapPanel);
-
-			JPanel treeMapPanel2 = treeMapView.composeVisualizationPanel2();
-			visualizationsPlacer.addTab("Treemap View - new layout", treeMapPanel2);
-
-		}
-
-		if(visibleVisualizations[ACTIVITY_VIEW]){
-			activityView = new ActivityView();
-			JComponent activityPanel = activityView.composeVisualizationPanel();
-			visualizationsPlacer.addTab("Activity View", activityPanel);
-		}
-		
-		/*
-		 * PANEL CONSTRUCTION
-		 */
-		
-		JSplitPane splitPane = new JSplitPane();
-		splitPane.setLeftComponent(developersPane);
-		splitPane.setRightComponent(visualizationsPlacer);
-		splitPane.setOneTouchExpandable(true);
-
-		visualizationsPanel = new JPanel(new BorderLayout());
-		visualizationsPanel.add(analysisInfoPanel, BorderLayout.SOUTH);
-		visualizationsPanel.add(splitPane, BorderLayout.CENTER);
-		
-		return visualizationsPanel;
-	}
-
-	public static Metrics getMetricsSession() {
-		return metricsSession;
-	}
-
-	public static LineView getLineView() {
-		return lineView;
-	}
-
-	public static GraphView getGraphView() {
-		return graphView;
-	}
-
-	public static ScatterPlotView getScatterPlotView() {
-		return scatterPlotView;
-	}
-
-	public static TreeMapView getTreeMapView() {
-		return treeMapView;
-	}
-
-	public static ActivityView getActivityView() {
-		return activityView;
-	}
-
-	public static DevelopersPanelControl getDevelopersPanel() {
-		return developersPanel;
-	}
-
-	public static AnalysisInfoPanel getAnalysisInfoBar() {
-		return analysisInfoBar;
-	}
-
-	public static ProjectMetricModel[] getAvailableProjectMetrics() {
-		return availableProjectMetrics;
-	}
-
-	public static void setAvailableProjectMetrics(
-			ProjectMetricModel[] availableProjectMetrics) {
-		Visualizer.availableProjectMetrics = availableProjectMetrics;
-	}
-
-	public static EntryMetricModel[] getAvailableEntryMetrics() {
-		return availableEntryMetrics;
-	}
-
-	public static void setAvailableEntryMetrics(
-			EntryMetricModel[] availableEntryMetrics) {
-		Visualizer.availableEntryMetrics = availableEntryMetrics;
-	}
-
-	public static FileMetricModel[] getAvailableFileMetrics() {
-		return availableFileMetrics;
-	}
-
-	public static void setAvailableFileMetrics(
-			FileMetricModel[] availableFileMetrics) {
-		Visualizer.availableFileMetrics = availableFileMetrics;
-	}
-
-	public static List<String> getAvailableProjectMetricsNames() {
-		List<String> projectMetricsNames = new Vector<String>();
-		for (int i = 0; i < availableProjectMetrics.length; i++) {
-			projectMetricsNames.add(availableProjectMetrics[i].getMetricName());
-		}
-		
-		return projectMetricsNames;
+		return validVisualizations;
 	}
 	
-	public static List<String> getAvailableEntryMetricsNames() {
-		List<String> entryMetricsNames = new Vector<String>();
-		for (int i = 0; i < availableEntryMetrics.length; i++) {
-			entryMetricsNames.add(availableEntryMetrics[i].getMetricName()); 
-		}
-		
-		return entryMetricsNames;
+	public static void main(String[] args) throws DatabaseException {
+//		try {
+//	        UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+//	    } catch (Exception e) {
+//	           e.printStackTrace();
+//	    }
+	    
+		Visualizer vis = new Visualizer(ProjectViewer.TABBED_PROJECTS_VIEW);
+        boolean[] visualizations = new boolean[]{true, false, false, false, false};
+        MetricModel[] metrics = new MetricModel[]{
+        		new Density(), new ClusterCoefficient(), new AddedFiles(), new ModifiedFiles(), new DeletedFiles(), new EntryLOC(),
+        		new Centrality()
+        		, new Betweenness()
+        };
+        Metrics[] metricsSession = new Metrics[]{new MetricsDAO().findById(Metrics.class, 1L), new MetricsDAO().findById(Metrics.class, 2L), new MetricsDAO().findById(Metrics.class, 4L)};
+//        Metrics[] metricsSession = new Metrics[]{new MetricsDAO().findById(Metrics.class, 2L), new MetricsDAO().findById(Metrics.class, 4L)};
+//        Metrics[] metricsSession = new Metrics[]{new MetricsDAO().findById(Metrics.class, 4L), new MetricsDAO().findById(Metrics.class, 4L), new MetricsDAO().findById(Metrics.class, 4L)};
+//        Metrics[] metricsSession = new Metrics[]{new MetricsDAO().findById(Metrics.class, 4L)};
+//      Metrics[] metricsSession = new Metrics[]{new MetricsDAO().findById(Metrics.class, 10L)};
+        
+        
+//        Metrics metric = new Metrics();
+//        metric.setAssociatedAnalysis(new AnalysisDAO().findById(Analysis.class, 1L));
+//        System.out.println(metric.getAssociatedAnalysis().getFirstEntry());
+//        System.out.println(metric.getAssociatedAnalysis().getLastEntry());
+////        Entry entry = new EntryDAO().findById(Entry.class, 83399);
+////        metric.getAssociatedAnalysis().setLastEntry(entry);
+//        Metrics[] metricsSession = new Metrics[1];
+//        metricsSession[0] = metric;
+        
+		JComponent component = vis.composeVisualizations(visualizations, metrics, metricsSession);
+        JFrame frame = new JFrame();
+        frame.add(component);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setVisible(true);
 	}
-	
-	public static List<String> getAvailableFileMetricsNames() {
-		List<String> fileMetricsNames = new Vector<String>();
-		for (int i = 0; i < availableFileMetrics.length; i++) {
-			fileMetricsNames.add(availableFileMetrics[i].getMetricName());
-		}
-		
-		return fileMetricsNames;
-	}
-	
-	public void setEnabledVisualizations(boolean[] visualizationsList){
-		this.visibleVisualizations = visualizationsList;
-	}
-
-	public static void main(String[] args) {
-		try {
-	        UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
-	    } catch (Exception e) {
-	           e.printStackTrace();
-	    }
-
-		Visualizer vis = new Visualizer();
-		vis.setEnabledVisualizations(new boolean[]{false, true, false, false, false});
-		
-		JFrame jframe = new JFrame("XFlow");
-		jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		try {
-			jframe.add(vis.composeVisualizationsPane(new MetricsDAO().findById(Metrics.class, 2L)));
-		} catch (DatabaseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		jframe.setVisible(true);
-		jframe.pack();
-	}	
-	
 }

@@ -34,7 +34,6 @@
 package br.ufpa.linc.xflow.presentation.commons;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ import javax.swing.GroupLayout;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JPanel;
+import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.LayoutStyle.ComponentPlacement;
 import javax.swing.event.ListSelectionEvent;
@@ -54,11 +53,12 @@ import javax.swing.event.ListSelectionListener;
 
 import prefuse.util.ui.JToggleGroup;
 import br.ufpa.linc.xflow.data.entities.Author;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.presentation.commons.util.ColorPalette;
+import br.ufpa.linc.xflow.presentation.visualizations.Visualization;
 
-public class DevelopersPanelControl {
+public class DevelopersPanelControl extends JComponent implements ListSelectionListener {
 
 	/**
 	 * 
@@ -71,54 +71,73 @@ public class DevelopersPanelControl {
 	private String[] developersList;
 
 	private String selectedAuthorsQuery; 
-
-	public DevelopersPanelControl(List<Author> validAuthors) {
+	
+	public DevelopersPanelControl(Metrics metricsSession) {
+		final List<Author> validAuthors;
+		if(metricsSession.getAssociatedAnalysis().isTemporalConsistencyForced()){
+			 validAuthors = metricsSession.getAssociatedAnalysis().getProject().getAuthorsListByEntries(metricsSession.getAssociatedAnalysis().getFirstEntry(), metricsSession.getAssociatedAnalysis().getLastEntry());
+		} else {
+			validAuthors = metricsSession.getAssociatedAnalysis().getProject().getAuthors();
+//			validAuthors = metrics.getAssociatedAnalysis().getProject().getAuthorsListByRevisions(metrics.getAssociatedAnalysis().getFirstEntry().getRevision(), metrics.getAssociatedAnalysis().getLastEntry().getRevision());
+		}
+		
+		ColorPalette.initiateColors(validAuthors.size());
 		List<String> validAuthorsNames = new ArrayList<String>();
 		for (Author author : validAuthors) {
 			validAuthorsNames.add(author.getName());
 		}
 		this.developersList = validAuthorsNames.toArray(new String[]{});
 		this.checkBoxList = new JToggleGroup(JToggleGroup.CHECKBOX, developersList, ColorPalette.getAuthorsColorPalette());
-		this.checkBoxList.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
-
-			@Override
-			public void valueChanged(ListSelectionEvent event) {
-				selectedAuthorsQuery = new String();
-				StringBuilder authorNames = new StringBuilder();
-				for ( int i=0; i<checkBoxList.getModel().getSize(); ++i ) {
-					if(checkBoxList.getSelectionModel().isSelectedIndex(i)){
-						System.out.println(((JCheckBox)checkBoxList.getComponent(i)).getText());
-						JCheckBox selectedComponent = (JCheckBox)checkBoxList.getComponent(i);
-						authorNames.append(selectedComponent.getText());
-						authorNames.append(" | ");
-					}
-				}
-				selectedAuthorsQuery = new String(authorNames);
-
-				if(Visualizer.getScatterPlotView() != null){
-					if(selectedAuthorsQuery.isEmpty()){
-						selectedAuthorsQuery = "\\u0";
-					}
-					Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
-				}
-
-				if(Visualizer.getTreeMapView() != null){
-					try {
-						Visualizer.getTreeMapView().getTreeMapNewLayout().mapAuthorFilesVisibility(selectedAuthorsQuery);
-					} catch (DatabaseException e) {
-						e.printStackTrace();
-					}
-				}
-
-				if(Visualizer.getActivityView() != null){
-					Visualizer.getActivityView().getBarChartRenderer().updateSeriesVisibility(selectedAuthorsQuery);
-					Visualizer.getActivityView().getStackedAreaRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
-				}
-			}
-		});
+		this.checkBoxList.getSelectionModel().addListSelectionListener(this);
 	}
 
-	public Component createControlPanel() {
+//	public DevelopersPanelControl(List<Author> validAuthors) {
+//		List<String> validAuthorsNames = new ArrayList<String>();
+//		for (Author author : validAuthors) {
+//			validAuthorsNames.add(author.getName());
+//		}
+//		this.developersList = validAuthorsNames.toArray(new String[]{});
+//		this.checkBoxList = new JToggleGroup(JToggleGroup.CHECKBOX, developersList, ColorPalette.getAuthorsColorPalette());
+//		this.checkBoxList.getSelectionModel().addListSelectionListener(new ListSelectionListener(){
+//
+//			@Override
+//			public void valueChanged(ListSelectionEvent event) {
+//				selectedAuthorsQuery = new String();
+//				StringBuilder authorNames = new StringBuilder();
+//				for ( int i=0; i<checkBoxList.getModel().getSize(); ++i ) {
+//					if(checkBoxList.getSelectionModel().isSelectedIndex(i)){
+//						System.out.println(((JCheckBox)checkBoxList.getComponent(i)).getText());
+//						JCheckBox selectedComponent = (JCheckBox)checkBoxList.getComponent(i);
+//						authorNames.append(selectedComponent.getText());
+//						authorNames.append(" | ");
+//					}
+//				}
+//				selectedAuthorsQuery = new String(authorNames);
+//
+//				if(Visualizer.getScatterPlotView() != null){
+//					if(selectedAuthorsQuery.isEmpty()){
+//						selectedAuthorsQuery = "\\u0";
+//					}
+//					Visualizer.getScatterPlotView().getScatterPlotRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
+//				}
+//
+//				if(Visualizer.getTreeMapView() != null){
+//					try {
+//						Visualizer.getTreeMapView().getTreeMapNewLayout().mapAuthorFilesVisibility(selectedAuthorsQuery);
+//					} catch (DatabaseException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//
+//				if(Visualizer.getActivityView() != null){
+//					Visualizer.getActivityView().getBarChartRenderer().updateSeriesVisibility(selectedAuthorsQuery);
+//					Visualizer.getActivityView().getStackedAreaRenderer().getAuthorsSearchPanel().setQuery(selectedAuthorsQuery);
+//				}
+//			}
+//		});
+//	}
+
+	public JComponent createControlPanel() {
 		setupCheckBoxList();
 
 		selectAllButton = setupSelectAllButton();
@@ -129,13 +148,11 @@ public class DevelopersPanelControl {
 		developersPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 		developersPanel.setBorder(null);
 
-		JPanel controlPanel = new JPanel();
+		GroupLayout layout = new GroupLayout(this);
 
-		GroupLayout controlPanelLayout = new GroupLayout(controlPanel);
-
-		controlPanelLayout.setHorizontalGroup(
-				controlPanelLayout.createParallelGroup(Alignment.LEADING)
-				.addGroup(controlPanelLayout.createSequentialGroup()
+		layout.setHorizontalGroup(
+				layout.createParallelGroup(Alignment.LEADING)
+				.addGroup(layout.createSequentialGroup()
 						.addComponent(selectAllButton)
 						.addPreferredGap(ComponentPlacement.RELATED)
 						.addComponent(deselectAllButton)
@@ -143,19 +160,19 @@ public class DevelopersPanelControl {
 						.addComponent(developersPanel, GroupLayout.DEFAULT_SIZE, 169, Short.MAX_VALUE)
 		);
 
-		controlPanelLayout.setVerticalGroup(
-				controlPanelLayout.createParallelGroup(Alignment.LEADING)
-				.addGroup(Alignment.TRAILING, controlPanelLayout.createSequentialGroup()
+		layout.setVerticalGroup(
+				layout.createParallelGroup(Alignment.LEADING)
+				.addGroup(Alignment.TRAILING, layout.createSequentialGroup()
 						.addComponent(developersPanel, GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
 						.addPreferredGap(ComponentPlacement.RELATED)
-						.addGroup(controlPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+						.addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
 								.addComponent(selectAllButton)
 								.addComponent(deselectAllButton)))
 		);
-		controlPanel.setBorder(BorderFactory.createTitledBorder("Developers"));
-		controlPanel.add(developersPanel, BorderLayout.CENTER);
-		controlPanel.setLayout(controlPanelLayout);
-		return controlPanel;
+		this.setBorder(BorderFactory.createTitledBorder("Developers"));
+		this.add(developersPanel, BorderLayout.CENTER);
+		this.setLayout(layout);
+		return this;
 	}
 
 
@@ -202,6 +219,29 @@ public class DevelopersPanelControl {
 
 	public String[] getDevelopersList() {
 		return developersList;
+	}
+
+	@Override
+	public void valueChanged(ListSelectionEvent paramListSelectionEvent) {
+		selectedAuthorsQuery = new String();
+		StringBuilder authorNames = new StringBuilder();
+		for ( int i=0; i<checkBoxList.getModel().getSize(); ++i ) {
+			if(checkBoxList.getSelectionModel().isSelectedIndex(i)){
+				JCheckBox selectedComponent = (JCheckBox)checkBoxList.getComponent(i);
+				authorNames.append(selectedComponent.getText());
+				authorNames.append(" | ");
+			}
+		}
+		selectedAuthorsQuery = new String(authorNames);
+
+		Visualization[] visualizations = (Visualization[]) ((JComponent) this.getParent()).getClientProperty("Visualizations");
+		for (Visualization visualization : visualizations) {
+			try {
+				visualization.updateAuthorsVisibility(selectedAuthorsQuery);
+			} catch (DatabaseException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
 

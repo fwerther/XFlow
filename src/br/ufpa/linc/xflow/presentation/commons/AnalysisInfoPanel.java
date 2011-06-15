@@ -12,7 +12,6 @@ import javax.swing.LayoutStyle.ComponentPlacement;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
 
 public class AnalysisInfoPanel extends JPanel {
 
@@ -38,18 +37,19 @@ public class AnalysisInfoPanel extends JPanel {
 		super();
 		
 		final EntryDAO entryDAO = new EntryDAO();
-		final int numberOfEntries = entryDAO.countEntriesByEntriesLimit(analysis.getFirstEntry(), analysis.getLastEntry());
+		final int numberOfEntries = entryDAO.countEntriesByRevisionsLimit(analysis.getFirstEntry(), analysis.getLastEntry());
+		this.putClientProperty("Analysis", analysis);
 		this.sliderControl = new SliderControl(1, numberOfEntries-1);
 		
 		final Date initialDate;
 		final Date finalDate;
 		
-		if(AbstractVisualization.getCurrentAnalysis().getProject().isTemporalConsistencyForced()){
+		if(analysis.getProject().isTemporalConsistencyForced()){
 			initialDate = analysis.getFirstEntry().getDate();
 			finalDate = analysis.getLastEntry().getDate();
 		} else{
-			initialDate = new EntryDAO().getMinorEntryDateByEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
-			finalDate = new EntryDAO().getHighestEntryDateByEntries(AbstractVisualization.getCurrentAnalysis().getFirstEntry(), AbstractVisualization.getCurrentAnalysis().getLastEntry());
+			initialDate = new EntryDAO().getMinorEntryDateByEntries(analysis.getFirstEntry(), analysis.getLastEntry());
+			finalDate = new EntryDAO().getHighestEntryDateByEntries(analysis.getFirstEntry(), analysis.getLastEntry());
 		}
 		
 		final Date firstEntryDate = analysis.getFirstEntry().getDate();

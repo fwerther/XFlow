@@ -38,14 +38,17 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Date;
 
+import javax.swing.JComponent;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
+import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import br.ufpa.linc.xflow.presentation.Visualizer;
-import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.Visualization;
+import br.ufpa.linc.xflow.presentation.visualizations.VisualizationRenderer;
+import br.ufpa.linc.xflow.presentation.visualizations.scatterplot.ScatterplotVisualization;
 
 public class SliderControl extends JSlider implements ChangeListener, MouseListener {
 
@@ -67,20 +70,25 @@ public class SliderControl extends JSlider implements ChangeListener, MouseListe
 		SliderControl source = (SliderControl) sliderChange.getSource();
 
 		if (source.getValueIsAdjusting()) {
-			if (Visualizer.getScatterPlotView() != null){
-				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().setHighQuality(false);
+			
+			Visualization[] visualizations = (Visualization[]) ((JComponent) this.getParent().getParent()).getClientProperty("Visualizations");
+			for (Visualization visualization : visualizations) {
+				visualization.toggleQualitySettings(VisualizationRenderer.LOW_QUALITY);
 			}
-			if (Visualizer.getTreeMapView() != null){
-//				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(false);
-				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(false);
-			}
-			if (Visualizer.getGraphView() != null){
-				Visualizer.getGraphView().getGraphRenderer().getDisplay().setHighQuality(false);
-			}
-			if (Visualizer.getLineView() != null){
-				Visualizer.getLineView().getZoomer().getZoomSlider().setMaximum(this.getValue());
-				Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot().getDomainAxis().setRange(this.getMinimum(), Visualizer.getLineView().getZoomer().getZoomSlider().getHighValue());
-			}
+//			if (Visualizer.getScatterPlotView() != null){
+//				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().setHighQuality(false);
+//			}
+//			if (Visualizer.getTreeMapView() != null){
+////				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(false);
+//				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(false);
+//			}
+//			if (Visualizer.getGraphView() != null){
+//				Visualizer.getGraphView().getGraphRenderer().getDisplay().setHighQuality(false);
+//			}
+//			if (Visualizer.getLineView() != null){
+//				Visualizer.getLineView().getZoomer().getZoomSlider().setMaximum(this.getValue());
+//				Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot().getDomainAxis().setRange(this.getMinimum(), Visualizer.getLineView().getZoomer().getZoomSlider().getHighValue());
+//			}
 		}
 	}
 
@@ -110,41 +118,43 @@ public class SliderControl extends JSlider implements ChangeListener, MouseListe
 
 	@Override
 	public void mouseReleased(MouseEvent arg0) {
-		try {
-			if (Visualizer.getScatterPlotView() != null){
-				Visualizer.getScatterPlotView().getScatterPlotRenderer().getxAxisQueryBinding().getNumberModel().setValueRange(this.getMinimum() , getValue(), this.getMinimum(), getValue());
-				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().repaint();
-				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().setHighQuality(true);
-				Visualizer.getAnalysisInfoBar().getLastRevisionLabel().setText(Visualizer.getAnalysisInfoBar().LAST_REVISION_LABEL_TEXT + " ("+this.getValue()+")");
-			}
-			if (Visualizer.getTreeMapView() != null){
-//				Visualizer.getTreeMapView().getTreeMapRenderer().updateTree(getValue());
-				Visualizer.getTreeMapView().getTreeMapNewLayout().updateTree(getValue());
-				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(true);
-//				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(true);
-			}
-			if (Visualizer.getGraphView() != null){
-				Visualizer.getGraphView().getGraphRenderer().updateGraph(getValue());
-				Visualizer.getGraphView().getGraphRenderer().getDisplay().setHighQuality(true);
-			}
-		} catch (DatabaseException e) {
-			e.printStackTrace();
-		}
-		
-		Date selectedRevisionDate;
-		
-		try {
-			if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
-				selectedRevisionDate = new EntryDAO().findEntryFromSequence(AbstractVisualization.getCurrentAnalysis().getProject(), getValue()).getDate();
-			} else {
-				selectedRevisionDate = new EntryDAO().findEntryFromRevision(AbstractVisualization.getCurrentAnalysis().getProject(), getValue()).getDate();
-			}
-		} catch (DatabaseException e) {
-			selectedRevisionDate = null;
-			e.printStackTrace();
-		}
+//		Analysis analysisInstance = (Analysis) ((JComponent) this.getParent()).getClientProperty("Analysis");
+//		Date selectedRevisionDate = null;
 
-		Visualizer.getAnalysisInfoBar().getLastRevisionDateLabel().setText(Visualizer.getAnalysisInfoBar().LAST_DATE_LABEL_TEXT + " (" + selectedRevisionDate + ")");
+		Visualization[] visualizations = (Visualization[]) ((JComponent) this.getParent().getParent()).getClientProperty("Visualizations");
+		for (Visualization visualization : visualizations) {
+			try {
+				visualization.updateDisplayedData(this.getMinimum(), this.getValue());
+				visualization.toggleQualitySettings(VisualizationRenderer.HIGH_QUALITY);
+			} catch (DatabaseException e) {
+				e.printStackTrace();
+			}
+		}
+		
+//		
+//			if (Visualizer.getScatterPlotView() != null){
+//				Visualizer.getScatterPlotView().getScatterPlotRenderer().getxAxisQueryBinding().getNumberModel().setValueRange(this.getMinimum() , getValue(), this.getMinimum(), getValue());
+//				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().repaint();
+//				Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().setHighQuality(true);
+//				Visualizer.getAnalysisInfoBar().getLastRevisionLabel().setText(Visualizer.getAnalysisInfoBar().LAST_REVISION_LABEL_TEXT + " ("+this.getValue()+")");
+//			}
+//			if (Visualizer.getTreeMapView() != null){
+////				Visualizer.getTreeMapView().getTreeMapRenderer().updateTree(getValue());
+//				Visualizer.getTreeMapView().getTreeMapNewLayout().updateTree(getValue());
+//				Visualizer.getTreeMapView().getTreeMapNewLayout().getDisplay().setHighQuality(true);
+////				Visualizer.getTreeMapView().getTreeMapRenderer().getDisplay().setHighQuality(true);
+//			}
+//			if (Visualizer.getGraphView() != null){
+//				Visualizer.getGraphView().getGraphRenderer().updateGraph(getValue());
+//				Visualizer.getGraphView().getGraphRenderer().getDisplay().setHighQuality(true);
+//			}
+//		
+//			if(analysisInstance.isTemporalConsistencyForced()){
+//				selectedRevisionDate = new EntryDAO().findEntryFromSequence(analysisInstance.getProject(), getValue()).getDate();
+//			} else {
+//				selectedRevisionDate = new EntryDAO().findEntryFromRevision(analysisInstance.getProject(), getValue()).getDate();
+//			}
+//		Visualizer.getAnalysisInfoBar().getLastRevisionDateLabel().setText(Visualizer.getAnalysisInfoBar().LAST_DATE_LABEL_TEXT + " (" + selectedRevisionDate + ")");
 	}
 
 }
