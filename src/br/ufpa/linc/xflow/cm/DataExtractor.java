@@ -66,15 +66,15 @@ public class DataExtractor {
 
 		final long revisionsInterval = 1 + endRevision - startRevision;
 
-		if(revisionsInterval < 10){
+		if(revisionsInterval < 100){
 			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);			
 			transformer.transformData(project, dataCollected);
 			project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 		}
 		else {
-			for (int i = 0; i < (int)(revisionsInterval/10); i++) {
+			for (int i = 0; i < (int)(revisionsInterval/100); i++) {
 				if(!processCanceled){
-					final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + (i*10), startRevision + ((i+1)*10) - 1);
+					final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + (i*100), startRevision + ((i+1)*100) - 1);
 					transformer.transformData(project, dataCollected);
 					project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 				}
@@ -83,8 +83,8 @@ public class DataExtractor {
 				//to frequently clear the persistence context to avoid memory issues
 				DatabaseManager.getDatabaseSession().clear();
 			}
-			if(((revisionsInterval%10) > 0) && (!processCanceled)){
-				final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/10)*10), endRevision);
+			if(((revisionsInterval%100) > 0) && (!processCanceled)){
+				final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/100)*100), endRevision);
 				transformer.transformData(project, dataCollected);
 				project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
 			}
