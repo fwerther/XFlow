@@ -132,7 +132,7 @@ public class AuthorDAO extends BaseDAO<Author>{
 	}
 	
 	public final List<String> getAuthorChangedFilesPath(final Author author, final Entry entry) throws DatabaseException {
-		final String query = "SELECT DISTINCT f.path from file f where f.entry <= :entry and f.entry.author = :author and (f.deletedOn >= :entry or f.deletedOn = null)";
+		final String query = "SELECT DISTINCT f.path from file f where f.entry <= :entry and f.entry.author = :author and (f.deletedOn >= :entry or f.deletedOn is null)";
 		final Object[] parameter1 = new Object[]{"author", author};
 		final Object[] parameter2 = new Object[]{"entry", entry};
 		
