@@ -110,24 +110,29 @@ public class CBasedLinesCounter implements LOCCounter {
 					int quoteFoundIndex = sourcecode.indexOf("\"", stringIndexFinder);
 					stringIndexFinder = quoteFoundIndex+1;
 					if(quoteFoundIndex > 0){
-						String checkForCommentedLine = sourcecode.substring(sourcecode.lastIndexOf("\n", quoteFoundIndex)+2, sourcecode.indexOf("\n", quoteFoundIndex));
-						if(checkForCommentedLine.trim().startsWith("//")){
-							continue;
-						}
-						if(sourcecode.charAt(quoteFoundIndex-1) == '\\'){
-							int slashesIndex = 2;
-							while(sourcecode.charAt(quoteFoundIndex-slashesIndex) == '\\'){
-								slashesIndex++;
+						if(sourcecode.contains("\n")){
+							String checkForCommentedLine = sourcecode.substring(sourcecode.lastIndexOf("\n", quoteFoundIndex)+2, sourcecode.indexOf("\n", quoteFoundIndex));
+							if(checkForCommentedLine.trim().startsWith("//")){
+								continue;
 							}
-							if(((slashesIndex - 1) % 2) == 0){
+							if(sourcecode.charAt(quoteFoundIndex-1) == '\\'){
+								int slashesIndex = 2;
+								while(sourcecode.charAt(quoteFoundIndex-slashesIndex) == '\\'){
+									slashesIndex++;
+								}
+								if(((slashesIndex - 1) % 2) == 0){
+									quotesFound++;
+								}
+							}
+							else if(sourcecode.charAt(quoteFoundIndex+1) != '\''){
 								quotesFound++;
 							}
-						}
-						else if(sourcecode.charAt(quoteFoundIndex+1) != '\''){
-							quotesFound++;
-						}
-						else {
-
+							else {
+	
+							}
+						} else {
+							quotesFound = 1;
+							break;
 						}
 					}
 				}
