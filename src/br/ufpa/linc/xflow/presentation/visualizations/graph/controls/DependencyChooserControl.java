@@ -14,9 +14,9 @@ import br.ufpa.linc.xflow.presentation.visualizations.VisualizationControl;
 import br.ufpa.linc.xflow.presentation.visualizations.graph.GraphRenderer;
 import br.ufpa.linc.xflow.presentation.visualizations.graph.GraphVisualization;
 
-public class LayoutChooserControl implements VisualizationControl<GraphVisualization>, ActionListener {
+public class DependencyChooserControl implements VisualizationControl<GraphVisualization>, ActionListener {
 
-	private JComboBox layoutChooserComboBox;
+	private JComboBox dependencyChooserComboBox;
 	private GraphVisualization visualizationControlled;
 	
 	@Override
@@ -24,42 +24,40 @@ public class LayoutChooserControl implements VisualizationControl<GraphVisualiza
 		this.visualizationControlled = (GraphVisualization) ((JComponent) visualizationComponent.getParent()).getClientProperty("Visualization Instance");
 		JPanel metricPickerPanel = new JPanel();
 		
-		layoutChooserComboBox = createChooserComboBox();
-		layoutChooserComboBox.addActionListener(this);
+		dependencyChooserComboBox = createChooserComboBox();
+		dependencyChooserComboBox.addActionListener(this);
 
-		JLabel layoutChooserLabel = new JLabel("Choose layout:");
-		metricPickerPanel.add(layoutChooserLabel);
-		metricPickerPanel.add(layoutChooserComboBox);
+		JLabel chooseRepresentationLabel = new JLabel("Displaying:");
+		metricPickerPanel.add(chooseRepresentationLabel);
+		metricPickerPanel.add(dependencyChooserComboBox);
 		metricPickerPanel.setOpaque(false);
 		
 		visualizationComponent.add(metricPickerPanel);
 	}
 
 	private JComboBox createChooserComboBox() {
-		final String[] layoutPossibilites = new String[]{"Radial", "Fruchterman-Reingold", "Circle", "Force"};
-		JComboBox layoutChooserComboBox = new JComboBox(layoutPossibilites);
-		return layoutChooserComboBox;
+		final String[] representationPossibilites = new String[]{"Coordination Requirements", "Task Assignment", "Task Dependency"};
+		JComboBox metricPickerComboBox = new JComboBox(representationPossibilites);
+		return metricPickerComboBox;
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
-		if(((String) layoutChooserComboBox.getSelectedItem()).equals("Radial")){
-			
-		} else if (((String) layoutChooserComboBox.getSelectedItem()).equals("Fruchterman-Reingold")){
-			
-		} else if (((String) layoutChooserComboBox.getSelectedItem()).equals("Circle")){
-			
-		} else if (((String) layoutChooserComboBox.getSelectedItem()).equals("Force")){
-			
+		final int selectedRepresentation;
+		if(((String) dependencyChooserComboBox.getSelectedItem()).equals("Coordination Requirements")){
+			selectedRepresentation = Dependency.COORD_REQUIREMENTS;
+		} else if (((String) dependencyChooserComboBox.getSelectedItem()).equals("Task Assignment")){
+			selectedRepresentation = Dependency.TASK_ASSIGNMENT;
+		} else {
+			selectedRepresentation = Dependency.TASK_DEPENDENCY;
 		}
-//		try {
-//			((GraphRenderer) visualizationControlled.getRenderers()[0]).changeGraphType(selectedRepresentation);
-//		} catch (DatabaseException e) {
-//			e.printStackTrace();
-//		}
+		try {
+			((GraphRenderer) visualizationControlled.getRenderers()[0]).changeGraphType(selectedRepresentation);
+		} catch (DatabaseException e) {
+			e.printStackTrace();
+		}
 //		Visualizer.getScatterPlotView().getScatterPlotRenderer().updateYAxis((String) metricPicker.getSelectedItem());
 //		Visualizer.getScatterPlotView().getScatterPlotRenderer().getDisplay().getVisualization().run("update");
 	}
-
 
 }

@@ -1,36 +1,3 @@
-/* 
- * 
- * XFlow
- * _______
- * 
- *  
- *  (C) Copyright 2010, by Universidade Federal do Pará (UFPA), Francisco Santana, Jean Costa, Pedro Treccani and Cleidson de Souza.
- * 
- *  This file is part of XFlow.
- *
- *  XFlow is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  XFlow is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XFlow.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- *  ========================
- *  RangeMarkersControl.java
- *  ========================
- *  
- *  Original Author: Francisco Santana;
- *  Contributor(s):  -;
- *  
- */
-
 package br.ufpa.linc.xflow.presentation.visualizations.line.controls;
 
 import java.awt.BasicStroke;
@@ -44,7 +11,6 @@ import javax.swing.BorderFactory;
 import javax.swing.GroupLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 import javax.swing.GroupLayout.Alignment;
 import javax.swing.LayoutStyle.ComponentPlacement;
 
@@ -53,13 +19,21 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.ui.Layer;
 import org.jfree.ui.TextAnchor;
 
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.MetricModel;
 import br.ufpa.linc.xflow.metrics.MetricsUtil;
-import br.ufpa.linc.xflow.presentation.Visualizer;
+import br.ufpa.linc.xflow.presentation.visualizations.VisualizationControl;
+import br.ufpa.linc.xflow.presentation.visualizations.line.LineRenderer;
+import br.ufpa.linc.xflow.presentation.visualizations.line.LineVisualization;
 
-public class RangeMarkersControl implements LineViewController, ItemListener {
+public class RangeMarkersControl extends JComponent implements VisualizationControl<LineVisualization>, ItemListener {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1710072879759208305L;
+	
 	private JCheckBox showAverageMarkerCBox;
 	private JCheckBox showFirstDevMarkerCBox;
 	private JCheckBox showSecDevMarkerCBox;
@@ -71,9 +45,10 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 	private ValueMarker secondDeviationTop;
 	private ValueMarker secondDeviationBot;
 	
+	private LineVisualization visualizationControlled;
 	
 	@Override
-	public JComponent getControlComponent() {
+	public void buildControlGUI(JComponent visualizationComponent) {
 		
 		showAverageMarkerCBox = new JCheckBox("Show average value");
 		showAverageMarkerCBox.setSelected(false);
@@ -87,15 +62,14 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 		showSecDevMarkerCBox.setSelected(false);
 		showSecDevMarkerCBox.addItemListener(this);
 		
-		JPanel rangeMarkersPanel = new JPanel();
-		rangeMarkersPanel.setLayout(setupLayout(rangeMarkersPanel));
-		rangeMarkersPanel.setBorder(BorderFactory.createTitledBorder("Reference values"));
-		//rangeMarkersPanel.setPreferredSize(new Dimension(207, 116));
+		this.setLayout(setupLayout(this));
+		this.setBorder(BorderFactory.createTitledBorder("Reference values"));
+//		rangeMarkersPanel.setPreferredSize(new Dimension(207, 116));
 		
-		return rangeMarkersPanel; 
+		visualizationComponent.add(this);
+		this.visualizationControlled = (LineVisualization) ((JComponent) visualizationComponent.getParent()).getClientProperty("Visualization Instance");
 	}
-	
-	private LayoutManager setupLayout(JPanel rangeMarkersPanel) {
+	private LayoutManager setupLayout(JComponent rangeMarkersPanel) {
 		GroupLayout layout = new GroupLayout(rangeMarkersPanel);
 		
 		layout.setHorizontalGroup(layout.createSequentialGroup()
@@ -125,10 +99,10 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 
 	public void drawAverageLineMarker() throws DatabaseException {
 
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		XYPlot plotter = ((LineRenderer) visualizationControlled.getRenderers()[0]).getChart().getXYPlot();
 		
-		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
+		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(((LineRenderer) visualizationControlled.getRenderers()[0]).getSelectedMetric());
+		double averageValue = selectedMetric.getAverageValue((Metrics) ((JComponent) this.getParent()).getClientProperty("Metrics Session"));
 
 		averageMarker = new ValueMarker(averageValue);
 		averageMarker.setPaint(Color.black);
@@ -141,11 +115,13 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 
 	public void drawFirstDeviationLineMarkers() throws DatabaseException {
 
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		final Metrics metricsSession = (Metrics) ((JComponent) this.getParent()).getClientProperty("Metrics Session");
+		final LineRenderer lineRenderer = ((LineRenderer) visualizationControlled.getRenderers()[0]);
+		XYPlot plotter = lineRenderer.getChart().getXYPlot();
 		
-		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
-		double deviationValue = selectedMetric.getStdDevValue(Visualizer.getMetricsSession());
+		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(lineRenderer.getSelectedMetric());
+		double averageValue = selectedMetric.getAverageValue(metricsSession);
+		double deviationValue = selectedMetric.getStdDevValue(metricsSession);
 		
 		firstDeviationTop = new ValueMarker(averageValue + deviationValue);
 		firstDeviationTop.setPaint(Color.RED);
@@ -166,11 +142,14 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 
 	public void drawSecondDeviationLineMarkers() throws DatabaseException {
 
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		final Metrics metricsSession = (Metrics) ((JComponent) this.getParent()).getClientProperty("Metrics Session");
+		final LineRenderer lineRenderer = ((LineRenderer) visualizationControlled.getRenderers()[0]);
 		
-		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(Visualizer.getLineView().getLineChartRenderer().getSelectedMetric());
-		double averageValue = selectedMetric.getAverageValue(Visualizer.getMetricsSession());
-		double deviationValue = selectedMetric.getStdDevValue(Visualizer.getMetricsSession());
+		XYPlot plotter = lineRenderer.getChart().getXYPlot();
+		
+		MetricModel selectedMetric = MetricsUtil.discoverMetricTypeByName(lineRenderer.getSelectedMetric());
+		double averageValue = selectedMetric.getAverageValue(metricsSession);
+		double deviationValue = selectedMetric.getStdDevValue(metricsSession);
 		
 		secondDeviationTop = new ValueMarker(averageValue + (deviationValue * 2));
 		secondDeviationTop.setPaint(Color.YELLOW);
@@ -192,18 +171,18 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 	
 
 	private void hideAverageLineMarker() {
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		XYPlot plotter = ((LineRenderer) visualizationControlled.getRenderers()[0]).getChart().getXYPlot();
 		plotter.removeRangeMarker(0, this.averageMarker, Layer.BACKGROUND);
 	}
 
 	private void hideFirstDeviationLineMarkers() {
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		XYPlot plotter = ((LineRenderer) visualizationControlled.getRenderers()[0]).getChart().getXYPlot();
 		plotter.removeRangeMarker(0, this.firstDeviationTop, Layer.BACKGROUND);
 		plotter.removeRangeMarker(0, this.firstDeviationBot, Layer.BACKGROUND);
 	}
 
 	private void hideSecondDeviationLineMarkers() {
-		XYPlot plotter = Visualizer.getLineView().getLineChartRenderer().getChart().getXYPlot();
+		XYPlot plotter = ((LineRenderer) visualizationControlled.getRenderers()[0]).getChart().getXYPlot();
 		plotter.removeRangeMarker(0, this.secondDeviationTop, Layer.BACKGROUND);
 		plotter.removeRangeMarker(0, this.secondDeviationBot, Layer.BACKGROUND);
 	}
@@ -218,7 +197,6 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 				try {
 					drawAverageLineMarker();
 				} catch (DatabaseException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -227,7 +205,6 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 				try {
 					drawFirstDeviationLineMarkers();
 				} catch (DatabaseException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -236,7 +213,6 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 				try {
 					drawSecondDeviationLineMarkers();
 				} catch (DatabaseException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -260,6 +236,5 @@ public class RangeMarkersControl implements LineViewController, ItemListener {
 			break;
 		}
 	}
-
 
 }
