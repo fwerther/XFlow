@@ -179,16 +179,24 @@ public class EntryDAO extends BaseDAO<Entry>{
 	
 	//TODO: not finished yet.
 	public ArrayList<Entry> getAllEntriesWithinDates(final Project project, final Date startDate, final Date finalDate) throws DatabaseException {
-		if(project.isTemporalConsistencyForced()){
-			final String query = "select e FROM entry e where e.project = :project order by e.revision";
-			final Object[] parameter1 = new Object[]{"project", project};
-			return null;
-		}
-		else{
-			final String query = "select distinct e FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision";
-			final Object[] parameter1 = new Object[]{"project", project};
-			return null;
-		}
+//		if(project.isTemporalConsistencyForced()){
+//			final String query = "select e FROM entry e where e.project = :project order by e.revision";
+//			final Object[] parameter1 = new Object[]{"project", project};
+//			return null;
+//		}
+//		else{
+//			final String query = "select distinct e FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision";
+//			final Object[] parameter1 = new Object[]{"project", project};
+//			return null;
+//		}
+		
+		final String query = "select e FROM entry e where e.project.id = :projectID and e.date between :startDate AND :finalDate";
+		
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"startDate", startDate};
+		final Object[] parameter3 = new Object[]{"finalDate", finalDate};
+		
+		return (ArrayList<Entry>) findByQuery(Entry.class, query, parameter1, parameter2, parameter3);
 	}
 	
 	public int countEntryChangedFiles(final long entryID) throws DatabaseException{
@@ -272,7 +280,16 @@ public class EntryDAO extends BaseDAO<Entry>{
 		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
 	}
 	
-	public int getEntrySequenceNumber(final Entry entry) throws DatabaseException{
+	public int countEntriesByRevisionsLimit(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
+		final String query = "SELECT COUNT(*) FROM entry e where e.project.id = :project AND e.revision >= :minorRevision AND e.revision <= :highestRevision";
+		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject().getId()};
+		final Object[] parameter2 = new Object[]{"minorRevision", firstEntry.getRevision()};
+		final Object[] parameter3 = new Object[]{"highestRevision", lastEntry.getRevision()};
+		
+		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
+	}
+	
+	public int getAuthorEntrySequenceNumber(final Entry entry) throws DatabaseException{
 		final String query = "SELECT COUNT(*) FROM entry e where e.author = :author AND e.id <= :entryID";
 		final Object[] parameter1 = new Object[]{"author", entry.getAuthor()};
 		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
@@ -362,7 +379,7 @@ public class EntryDAO extends BaseDAO<Entry>{
 				"ORDER BY entry.date";
 		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
 		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
-		
 		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2);
 	}
+
 }
