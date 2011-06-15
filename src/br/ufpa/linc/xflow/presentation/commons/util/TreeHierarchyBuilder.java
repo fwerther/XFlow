@@ -40,22 +40,23 @@ import prefuse.data.Tree;
 import br.ufpa.linc.xflow.data.dao.cm.FolderDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Folder;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
-import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
 
 public class TreeHierarchyBuilder {
 	
-	public static Tree createTreeMapGraph(final Analysis analysis, long sequence) throws DatabaseException{
-
+	private static Analysis analysis;
+	
+	public static Tree createTreeMapGraph(final Analysis analysis, Entry entry) throws DatabaseException{
+		TreeHierarchyBuilder.analysis = analysis;
 		final ArrayList<Folder> folders;
 		
-		if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
-			folders = new FolderDAO().findRootFoldersUntilSequence(analysis.getProject(), sequence);
+		if(analysis.isTemporalConsistencyForced()){
+			folders = new FolderDAO().findRootFoldersUntilSequence(analysis.getProject(), 1541);
 		} else {
-			
-			folders = new FolderDAO().findRootFoldersUntilRevision(analysis.getProject(), sequence);
+			folders = new FolderDAO().findRootFoldersUntilRevision(analysis.getProject(), entry.getRevision());
 		}
 		
 		Tree tree = new Tree();
@@ -69,28 +70,26 @@ public class TreeHierarchyBuilder {
 			leaf.set("name", folder.getName());
 			leaf.set("type", "folder");
 			leaf.set("id", folder.getId());
-			System.out.println("FOLDER: "+folder.getName());
 			final ArrayList<Folder> subfolders;
 			final ArrayList<ObjFile> files;
-			if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
-				subfolders = new FolderDAO().findSubFoldersUntilSequence(folder.getId(), sequence);
-				files = new ObjFileDAO().getFilesFromFolderUntilSequence(folder, sequence);
+			if(analysis.isTemporalConsistencyForced()){
+				subfolders = new FolderDAO().findSubFoldersUntilSequence(folder.getId(), 1541);
+				files = new ObjFileDAO().getFilesFromFolderUntilSequence(folder, 1541);
 			} else {
-				subfolders = new FolderDAO().findSubFoldersUntilRevision(folder.getId(), sequence);
-				files = new ObjFileDAO().getFilesFromFolderUntilRevision(folder.getId(), sequence);
+				subfolders = new FolderDAO().findSubFoldersUntilRevision(folder.getId(), entry.getRevision());
+				files = new ObjFileDAO().getFilesFromFolderUntilRevision(folder.getId(), entry.getRevision());
 			}
 			
-			extractLeafs(tree, leaf, subfolders, sequence);
+			extractLeafs(tree, leaf, subfolders, entry);
 			extractFiles(tree, leaf, files);
 		}
 		
 		return tree;
 	}
 	
-	private static void extractLeafs(Tree tree, Node parent, ArrayList<Folder> folders, long sequence) throws DatabaseException {
+	private static void extractLeafs(Tree tree, Node parent, ArrayList<Folder> folders, Entry entry) throws DatabaseException {
 		for (Folder folder : folders) {
 			Node leaf = tree.addChild(parent);
-			System.out.println("SUBFOLDER: "+folder.getName());
 			leaf.set("name", folder.getName());
 			leaf.set("type", "folder");
 			leaf.set("id", folder.getId());
@@ -98,16 +97,16 @@ public class TreeHierarchyBuilder {
 			final ArrayList<Folder> subfolders;
 			final ArrayList<ObjFile> files;
 			
-			if(AbstractVisualization.getCurrentAnalysis().isTemporalConsistencyForced()){
-				subfolders = new FolderDAO().findSubFoldersUntilSequence(folder.getId(), sequence);
-				files = new ObjFileDAO().getFilesFromFolderUntilSequence(folder, sequence);
+			if(analysis.isTemporalConsistencyForced()){
+				subfolders = new FolderDAO().findSubFoldersUntilSequence(folder.getId(), 1541);
+				files = new ObjFileDAO().getFilesFromFolderUntilSequence(folder, 1541);
 			} else {
-				subfolders = new FolderDAO().findSubFoldersUntilRevision(folder.getId(), sequence);
-				files = new ObjFileDAO().getFilesFromFolderUntilRevision(folder.getId(), sequence);
+				subfolders = new FolderDAO().findSubFoldersUntilRevision(folder.getId(), entry.getRevision());
+				files = new ObjFileDAO().getFilesFromFolderUntilRevision(folder.getId(), entry.getRevision());
 			}
 			
 			if(subfolders.size() > 0){
-				extractLeafs(tree, leaf, subfolders, sequence);
+				extractLeafs(tree, leaf, subfolders, entry);
 			}
 			
 			extractFiles(tree, leaf, files);
@@ -117,9 +116,8 @@ public class TreeHierarchyBuilder {
 	private static void extractFiles(Tree tree, Node parent, ArrayList<ObjFile> files){
 		if(files != null){
 			for (ObjFile file : files) {
-				System.out.println("FILE: "+file.getPath());
 				Node fileLeaf = tree.addChild(parent);
-				fileLeaf.set("name", file.getPath());
+				fileLeaf.set("name", "F"+file.getId());
 				fileLeaf.set("type", "file");
 				fileLeaf.set("id", file.getId());
 			}

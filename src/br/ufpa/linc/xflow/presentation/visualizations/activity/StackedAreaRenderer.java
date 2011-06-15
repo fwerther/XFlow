@@ -1,36 +1,3 @@
-/* 
- * 
- * XFlow
- * _______
- * 
- *  
- *  (C) Copyright 2010, by Universidade Federal do Pará (UFPA), Francisco Santana, Jean Costa, Pedro Treccani and Cleidson de Souza.
- * 
- *  This file is part of XFlow.
- *
- *  XFlow is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  XFlow is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with XFlow.  If not, see <http://www.gnu.org/licenses/>.
- *
- *
- *  ========================
- *  StackedAreaRenderer.java
- *  ========================
- *  
- *  Original Author: Francisco Santana;
- *  Contributor(s):  -;
- *  
- */
-
 package br.ufpa.linc.xflow.presentation.visualizations.activity;
 
 import java.awt.BorderLayout;
@@ -43,7 +10,10 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 
 import prefuse.Constants;
 import prefuse.Display;
@@ -53,12 +23,10 @@ import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.DataColorAction;
 import prefuse.action.filter.VisibilityFilter;
-import prefuse.action.layout.AxisLabelLayout;
 import prefuse.action.layout.StackedAreaChart;
 import prefuse.data.Table;
 import prefuse.data.expression.AndPredicate;
 import prefuse.data.query.NumberRangeModel;
-import prefuse.data.query.ObjectRangeModel;
 import prefuse.data.query.SearchQueryBinding;
 import prefuse.render.AxisRenderer;
 import prefuse.render.PolygonRenderer;
@@ -69,15 +37,16 @@ import prefuse.util.ui.JSearchPanel;
 import prefuse.visual.VisualItem;
 import prefuse.visual.VisualTable;
 import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
-import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
-import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
+import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.presentation.commons.util.ColorPalette;
-import br.ufpa.linc.xflow.presentation.visualizations.AbstractVisualization;
+import br.ufpa.linc.xflow.presentation.visualizations.VisualizationRenderer;
 
-public class StackedAreaRenderer {
+public class StackedAreaRenderer implements VisualizationRenderer<ActivityVisualization> {
 
+	private Metrics metricsSession;
+	
 	private Display display;
 	private Table datatable;
 	private VisualTable visualTable;
@@ -93,9 +62,12 @@ public class StackedAreaRenderer {
 //	private AxisLayout yAxis;
 //	private AxisLabelLayout yLabels;
 	private NumberRangeModel yAxisRangeModel;
-
-	public StackedAreaRenderer() throws DatabaseException {
+	
+	@Override
+	public void composeVisualization(JComponent visualizationComponent) throws DatabaseException {
+		this.metricsSession = (Metrics) ((JComponent) visualizationComponent.getParent()).getClientProperty("Metrics Session");
 		createDatatable();
+		((JSplitPane) visualizationComponent).setBottomComponent(this.draw());
 	}
 
 	private void createDatatable() throws DatabaseException {
@@ -103,7 +75,7 @@ public class StackedAreaRenderer {
 		addDatatableData();
 	}
 
-	public JPanel draw(){
+	public JComponent draw(){
 		Visualization visualization = new Visualization();
 
 		setupVisualTable(visualization);
@@ -145,10 +117,7 @@ public class StackedAreaRenderer {
 
 		visualization.run("draw");
 
-		JPanel stackedAreaPanel = new JPanel(new BorderLayout());
-		stackedAreaPanel.add(display);
-
-		return stackedAreaPanel;
+		return this.display;
 	}
 
 	private void setupVisualTable(Visualization visualization) {
@@ -199,7 +168,7 @@ public class StackedAreaRenderer {
 		ActionList layout = new ActionList();
 		String[] fields = datacolumns.toArray(new String[]{});
 
-		ObjectRangeModel orm = new ObjectRangeModel(fields); 
+//		ObjectRangeModel orm = new ObjectRangeModel(fields); 
 //		AxisLabelLayout xlabels = new AxisLabelLayout("xAxis",Constants.X_AXIS,orm);
 //
 		//		yAxis = new AxisLayout("commits", "Density", Constants.Y_AXIS, VisiblePredicate.TRUE);
@@ -263,12 +232,12 @@ public class StackedAreaRenderer {
 		datacolumns = new ArrayList<String>();
 
 		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(AbstractVisualization.getCurrentAnalysis().getFirstEntry().getDate());
+		calendar.setTime(metricsSession.getAssociatedAnalysis().getFirstEntry().getDate());
 		int firstMonth = calendar.get(Calendar.MONTH);
 		final int firstYear = calendar.get(Calendar.YEAR);
 
 		calendar = Calendar.getInstance();
-		calendar.setTime(AbstractVisualization.getCurrentAnalysis().getLastEntry().getDate());
+		calendar.setTime(metricsSession.getAssociatedAnalysis().getLastEntry().getDate());
 		final int lastMonth = calendar.get(Calendar.MONTH);
 		final int lastYear = calendar.get(Calendar.YEAR);
 
@@ -291,7 +260,7 @@ public class StackedAreaRenderer {
 	}
 
 	private void addDatatableData() throws DatabaseException {
-		List<Author> authorsList = new AuthorDAO().getProjectAuthors(AbstractVisualization.getCurrentAnalysis().getProject().getId());
+		List<Author> authorsList = new AuthorDAO().getProjectAuthors(metricsSession.getAssociatedAnalysis().getProject().getId());
 		yAxisRangeModel = new NumberRangeModel(0, 0, 0, 0);
 		for (Author author : authorsList) {
 			datatable.addRow();
@@ -328,4 +297,19 @@ public class StackedAreaRenderer {
 		return display;
 	}
 
+	@Override
+	public void setLowerQuality() {
+		//Do nothing for now. If visualization is not being updated, no need to waste time.
+	}
+
+	@Override
+	public void setHighQuality() {
+		//Do nothing for now. If visualization is not being updated, no need to waste time.
+	}
+
+	@Override
+	public void updateVisualizationLimits(int inferiorLimit, int superiorLimit) {
+		//Do nothing. For now.
+	}
+	
 }
