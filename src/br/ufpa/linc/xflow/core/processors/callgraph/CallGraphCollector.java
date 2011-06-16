@@ -11,10 +11,14 @@ import java.util.Set;
 import br.ufpa.linc.xflow.core.processors.DependenciesIdentifier;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
+import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
 import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
+import br.ufpa.linc.xflow.data.entities.Author;
+import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
+import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
@@ -28,6 +32,9 @@ public class CallGraphCollector implements DependenciesIdentifier {
 	private CallGraphAnalysis analysis;	
 	private Filter filter;
 	private int latestFileStampAssigned;
+	private int latestAuthorStampAssigned;
+	
+	private Map<String, AuthorDependencyObject> authorsStampsMap;
 	
 	@Override
 	public final void dataCollect(List<Long> revisions, Analysis analysis, Filter filter) throws DatabaseException {
@@ -49,6 +56,8 @@ public class CallGraphCollector implements DependenciesIdentifier {
 					
 			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> structuralDependencies = 
 				gatherStructuralDependencies(entry.getEntryFiles());
+			
+			final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> taskAssignmentDependencies = gatherTaskAssignmentDependencies(entry.getAuthor(), structuralDependencies); 
 					
 			if(structuralDependencies.size() > 0) { 
 				final TaskDependency taskDependency = new TaskDependency(true);
@@ -74,9 +83,127 @@ public class CallGraphCollector implements DependenciesIdentifier {
 
 	private void initiateCache() throws DatabaseException {
 		latestFileStampAssigned = new FileDependencyObjectDAO().checkHighestStamp(analysis);
+		latestAuthorStampAssigned = new AuthorDependencyObjectDAO().checkHighestStamp(analysis);
+		
+		authorsStampsMap = new HashMap<String, AuthorDependencyObject>();
+	}
+	
+	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles) throws DatabaseException {
+
+		//Builds the list of dependency objects
+		Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
+		boolean flag = false;
+		for (int i = 0; i < changedFiles.size(); i++) {
+			if(filter.match(changedFiles.get(i).getPath())){
+				FileDependencyObject changedFileDO = findFileDependencyObjectInstance(changedFiles.get(i), flag);
+				Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
+
+				for (int j = 0; j < changedFiles.size(); j++) {
+					if(filter.match(changedFiles.get(j).getPath())){
+						DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
+						dependencySet.setDependedObject(changedFileDO);
+
+						if(i != j){
+							FileDependencyObject otherFileDO = findFileDependencyObjectInstance(changedFiles.get(j), flag);
+							if(StructuralCouplingIdentifier.checkStructuralCoupling(changedFileDO, otherFileDO)){
+								dependenciesMap.put(otherFileDO, 1);
+							}
+						} else {
+							dependenciesMap.put(changedFileDO, 1);
+						}
+
+						dependencySet.setDependenciesMap(dependenciesMap);
+						setOfDependencySets.add(dependencySet);
+					}
+				}
+			}
+			flag = true;
+		}
+		
+		return setOfDependencySets;
 	}
 
-	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles) throws DatabaseException {
+	private FileDependencyObject findFileDependencyObjectInstance(ObjFile changedFile, boolean flag) throws DatabaseException {
+		FileDependencyObject dependencyObject;
+		FileDependencyObjectDAO dependencyObjDAO = new FileDependencyObjectDAO();
+
+		//Added file
+		if(changedFile.getOperationType() == 'A' && !flag){
+			latestFileStampAssigned++;
+
+			dependencyObject = new FileDependencyObject();
+			dependencyObject.setAnalysis(analysis);
+			dependencyObject.setFile(changedFile);
+			dependencyObject.setFilePath(changedFile.getPath());
+			dependencyObject.setAssignedStamp(latestFileStampAssigned);
+
+			dependencyObjDAO.insert(dependencyObject);
+
+			//Modified or deleted file
+		} else {
+
+			//Search database for matching FileDependencyObject 
+			dependencyObject =  dependencyObjDAO.findDependencyObjectByFilePath(analysis, changedFile.getPath());
+
+			if (dependencyObject == null){
+				ObjFile addedFileReference = 
+					new ObjFileDAO().findAddedFileByPathUntilEntry(analysis.getProject(), changedFile.getEntry(), changedFile.getPath());
+
+				if(addedFileReference != null){
+					latestFileStampAssigned++;
+
+					dependencyObject = new FileDependencyObject();
+					dependencyObject.setAnalysis(analysis);
+					dependencyObject.setFile(changedFile);
+					dependencyObject.setFilePath(changedFile.getPath());
+					dependencyObject.setAssignedStamp(latestFileStampAssigned);
+
+					dependencyObjDAO.insert(dependencyObject);
+				}
+			}
+			else{
+				dependencyObject.setFile(changedFile);
+			}
+		}
+		
+		return dependencyObject;
+	}
+	
+	private Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> gatherTaskAssignmentDependencies(Author author, Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies) throws DatabaseException {
+		final AuthorDependencyObjectDAO authorDependencyDAO = new AuthorDependencyObjectDAO();
+		final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> dependenciesSet = new HashSet<DependencySet<AuthorDependencyObject, FileDependencyObject>>();
+		
+		final AuthorDependencyObject dependedAuthor;
+		if(authorsStampsMap.containsKey(author.getName())){
+			dependedAuthor = (AuthorDependencyObject) authorsStampsMap.get(author.getName());
+		} else {
+			latestAuthorStampAssigned++;
+			
+			dependedAuthor = new AuthorDependencyObject();
+			dependedAuthor.setAnalysis(analysis);
+			dependedAuthor.setAssignedStamp(latestAuthorStampAssigned);
+			dependedAuthor.setAuthor(author);
+			
+			authorDependencyDAO.insert(dependedAuthor);
+			authorsStampsMap.put(author.getName(), dependedAuthor);
+			authorsStampsMap.put("\\u0A"+latestAuthorStampAssigned, dependedAuthor);
+		}
+			
+		//Builds the set of dependency objects
+		final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
+		for (DependencySet<FileDependencyObject, FileDependencyObject> fileDependency : fileDependencies) {
+			dependenciesMap.put(fileDependency.getDependedObject(), 1);
+		}
+
+		DependencySet<AuthorDependencyObject, FileDependencyObject> dependencySet = new DependencySet<AuthorDependencyObject, FileDependencyObject>();
+		dependencySet.setDependedObject(dependedAuthor);
+		dependencySet.setDependenciesMap(dependenciesMap);
+		
+		dependenciesSet.add(dependencySet);
+	    return dependenciesSet;
+	}
+
+	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependenciesOld(List<ObjFile> changedFiles) throws DatabaseException {
 		FileDependencyObjectDAO dependencyObjDAO = new FileDependencyObjectDAO();
 	
 		//Builds the list of dependency objects
@@ -103,8 +230,7 @@ public class CallGraphCollector implements DependenciesIdentifier {
 					
 					//Search database for matching FileDependencyObject 
 					dependencyObject = 
-						dependencyObjDAO.findDependencyObjectByFilePath(
-								analysis, changedFile.getPath());
+						dependencyObjDAO.findDependencyObjectByFilePath(analysis, changedFile.getPath());
 					
 					if (dependencyObject == null){
 						ObjFile addedFileReference = 
