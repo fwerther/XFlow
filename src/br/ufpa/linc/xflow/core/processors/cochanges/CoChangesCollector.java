@@ -17,6 +17,7 @@ import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
+import br.ufpa.linc.xflow.data.entities.CoordinationRequirements;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
@@ -25,6 +26,7 @@ import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.data.entities.TaskAssignment;
 import br.ufpa.linc.xflow.data.entities.TaskDependency;
 import br.ufpa.linc.xflow.data.representation.matrix.Matrix;
+import br.ufpa.linc.xflow.data.representation.matrix.MatrixFactory;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.util.Filter;
 
@@ -72,7 +74,7 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 				dependencyDAO.insert(taskDependency);						
 				System.out.print(" done!\n");
 					
-				/**
+				
 				System.out.print("* Collecting tasks dependencies...");
 				final TaskAssignment taskAssignment = new TaskAssignment();
 				taskAssignment.setAssociatedAnalysis(this.analysis);
@@ -99,7 +101,7 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 					dependencyDAO.insert(coordinationRequirement);
 					System.out.print(" done!\n");
 				}
-				*/
+				
 			} else {
 				System.out.println("\nSkipped. No dependency collected on specified entry.");
 			}
@@ -115,6 +117,8 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 		
 		latestFileStampAssigned = new FileDependencyObjectDAO().checkHighestStamp(analysis);
 		latestAuthorStampAssigned = new AuthorDependencyObjectDAO().checkHighestStamp(analysis);
+		taskAssignmentMatrix = MatrixFactory.createMatrix();
+		taskDependencyMatrix = MatrixFactory.createMatrix();
 	}
 
 	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherTaskDependency(List<ObjFile> changedFiles) throws DatabaseException {
@@ -262,7 +266,7 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 					dependentAuthor = null;
 				}
 				
-				dependenciesMap.put(dependentAuthor, coordReq.get(j, i));
+				dependenciesMap.put(dependentAuthor, coordReq.getValueAt(j, i));
 			}
 			authorDependencies.setDependenciesMap(dependenciesMap);
 			authorDependencies.setDependedObject(dependedAuthor);
