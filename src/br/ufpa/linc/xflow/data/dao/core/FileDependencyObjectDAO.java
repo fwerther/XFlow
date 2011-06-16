@@ -7,7 +7,6 @@ import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
-import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 
@@ -152,8 +151,7 @@ public class FileDependencyObjectDAO extends DependencyObjectDAO<FileDependencyO
 		return dependencyObjects;
 	}
 
-	public FileDependencyObject findDependencyObjectByFilePath (
-			final Analysis analysis, final String path) throws DatabaseException {
+	public FileDependencyObject findDependencyObjectByFilePath (Analysis analysis, String path) throws DatabaseException {
 		final String query = "SELECT dep from file_dependency dep where " +
 				"dep.analysis = :analysis and dep.filePath = :path";
 		final Object[] parameter1 = new Object[]{"analysis", analysis};
@@ -166,25 +164,5 @@ public class FileDependencyObjectDAO extends DependencyObjectDAO<FileDependencyO
 		return listFileDependencyObject.isEmpty() ? 
 				null : listFileDependencyObject.iterator().next();
 	}
-	
-	public List<FileDependencyObject> findSuppliers(FileDependencyObject client, 
-			List<FileDependencyObject> excludedSuppliers) throws DatabaseException {
-		
-		String query = "SELECT DISTINCT dset.dependedObject FROM dependency_set dset " +
-				"JOIN dset.dependenciesMap AS map " +
-				"JOIN dset.associatedDependency AS assocDep " +
-				"WHERE index(map) = :client " +
-				"AND dset.dependedObject NOT IN :excludedSuppliers " +
-				"AND assocDep.associatedAnalysis.id = :associatedAnalysisID " +
-				"AND assocDep.type = :dependencyType";
-		
-		final Object[] parameter1 = new Object[]{"client", client};
-		final Object[] parameter2 = new Object[]{"excludedSuppliers", excludedSuppliers};
-		final Object[] parameter3 = new Object[]{"associatedAnalysisID", client.getAnalysis().getId()};
-		final Object[] parameter4 = new Object[]{"dependencyType", Dependency.TASK_DEPENDENCY};
-		
-		return (List<FileDependencyObject>) findByQuery(
-				FileDependencyObject.class, query, parameter1, parameter2, 
-				parameter3, parameter4);
-	}
+
 }

@@ -69,12 +69,22 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 	}
 	
 	public List<Dependency> findAllDependenciesUntilIt(final Dependency dependency) throws DatabaseException {
-		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID and dep.id <= :dependencyID and dep.type = :dependencyType";
-		final Object[] parameter1 = new Object[]{"analysisID", dependency.getAssociatedAnalysis().getId()};
+		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis = :analysis and dep.id <= :dependencyID and dep.type = :dependencyType";
+		final Object[] parameter1 = new Object[]{"analysis", dependency.getAssociatedAnalysis()};
 		final Object[] parameter2 = new Object[]{"dependencyID", dependency.getId()};
 		final Object[] parameter3 = new Object[]{"dependencyType", dependency.getType()};
 		
 		return (List<Dependency>) findByQuery(Dependency.class, query, parameter1, parameter2, parameter3);
+	}
+
+	public List<Dependency> findDependenciesBetweenDependencies(Dependency initialEntryDependency, Dependency finalEntryDependency) throws DatabaseException {
+		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis = :analysis and dep.type = :dependencyType and dep.associatedEntry.id between :initialEntry and :finalEntry";
+		final Object[] parameter1 = new Object[]{"analysis", initialEntryDependency.getAssociatedAnalysis()};
+		final Object[] parameter2 = new Object[]{"dependencyType", initialEntryDependency.getType()};
+		final Object[] parameter3 = new Object[]{"initialEntry", initialEntryDependency.getAssociatedEntry().getId()};
+		final Object[] parameter4 = new Object[]{"finalEntry", finalEntryDependency.getAssociatedEntry().getId()};
+		
+		return (List<Dependency>) findByQuery(Dependency.class, query, parameter1, parameter2, parameter3, parameter4);
 	}
 
 
