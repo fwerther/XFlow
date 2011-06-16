@@ -50,5 +50,8 @@
 	<classpathentry kind="lib" path="lib/CM-LIB/sqljet.1.0.4.jar"/>
 	<classpathentry kind="lib" path="lib/Presentation-LIB/Prefuse/prefuse.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/swingx-beaninfo-1.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/swingx-core-1.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/Data-LIB/Representation/ujmp-complete-0.2.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
