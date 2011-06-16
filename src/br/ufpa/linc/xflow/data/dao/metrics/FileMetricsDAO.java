@@ -35,15 +35,17 @@ package br.ufpa.linc.xflow.data.dao.metrics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
-import br.ufpa.linc.xflow.data.dao.BaseDAO;
+import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Metrics;
+import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.file.FileMetricValues;
 
-public class FileMetricsDAO extends BaseDAO<FileMetricValues>{
+public class FileMetricsDAO extends MetricModelDAO<FileMetricValues>{
 
 	@Override
 	public FileMetricValues findById(final Class<FileMetricValues> clazz, final long id) throws DatabaseException {
@@ -137,5 +139,63 @@ public class FileMetricsDAO extends BaseDAO<FileMetricValues>{
 		final Object[] parameter1 = new Object[]{"metrics", metrics};
 		
 		return getDoubleValueByQuery(query, parameter1);
+	}
+
+	public FileMetricValues findMetricValuesByFileUntilDate(Metrics metricsSession, ObjFile addedFileInstance, Date limitantDate) throws DatabaseException {
+		
+		final String query = "SELECT f FROM file_metrics f WHERE f.id = " +
+		"(SELECT MAX(f.id) FROM file_metrics f " +
+		"WHERE f.associatedMetricsObject = :metricsSession " +
+		"AND f.fileID.path = :path " +
+		"AND f.entry.date <= :limitantDate)";
+
+		final Object[] parameter1 = new Object[]{"metricsSession", metricsSession};
+		final Object[] parameter2 = new Object[]{"path", addedFileInstance.getPath()};
+		final Object[] parameter3 = new Object[]{"limitantDate", limitantDate};
+
+		return findUnique(FileMetricValues.class, query, parameter1, parameter2, parameter3);
+	}
+
+	public FileMetricValues findMetricValuesByFileUntilEntry(Metrics metricsSession, ObjFile addedFileInstance, Entry entry) throws DatabaseException {
+		
+		final String query = "SELECT f FROM file_metrics f WHERE f.id = " +
+		"(SELECT MAX(f.id) FROM file_metrics f " +
+		"WHERE f.associatedMetricsObject = :metricsSession " +
+		"AND f.fileID.path = :path " +
+		"AND f.entry.id <= :limitantEntry)";
+
+		final Object[] parameter1 = new Object[]{"metricsSession", metricsSession};
+		final Object[] parameter2 = new Object[]{"path", addedFileInstance.getPath()};
+		final Object[] parameter3 = new Object[]{"limitantEntry", entry.getId()};
+
+		return findUnique(FileMetricValues.class, query, parameter1, parameter2, parameter3);
+	}
+
+	@Override
+	public List<FileMetricValues> getAllMetricsTable(Metrics metrics) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		
+		return (List<FileMetricValues>) findByQuery(FileMetricValues.class, query, parameter1);
+	}
+	
+	@Override
+	public List<FileMetricValues> getMetricsTableByAuthor(Metrics metrics, Author author) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics and values.author.id = authorID";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		final Object[] parameter2 = new Object[]{"author", author.getId()};
+		
+		return (List<FileMetricValues>) findByQuery(FileMetricValues.class, query, parameter1, parameter2);
+	}
+
+	@Override
+	public List<FileMetricValues> getMetricsTableFromAuthorByEntries(Metrics metrics, Author author, Entry initialEntry, Entry finalEntry) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics and values.author.id = authorID and values.entry.id between initialEntryID and finalEntryID";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
+		final Object[] parameter3 = new Object[]{"initialEntryID", initialEntry.getId()};
+		final Object[] parameter4 = new Object[]{"finalEntryID", finalEntry.getId()};
+		
+		return (List<FileMetricValues>) findByQuery(FileMetricValues.class, query, parameter1, parameter2, parameter3, parameter4);
 	}
 }

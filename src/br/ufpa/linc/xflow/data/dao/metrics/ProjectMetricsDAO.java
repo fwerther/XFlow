@@ -35,14 +35,15 @@ package br.ufpa.linc.xflow.data.dao.metrics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import br.ufpa.linc.xflow.data.dao.BaseDAO;
+import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricValues;
 
-public class ProjectMetricsDAO extends BaseDAO<ProjectMetricValues> {
+public class ProjectMetricsDAO extends MetricModelDAO<ProjectMetricValues> {
 
 	@Override
 	public ProjectMetricValues findById(final Class<ProjectMetricValues> clazz, final long id) throws DatabaseException {
@@ -136,5 +137,33 @@ public class ProjectMetricsDAO extends BaseDAO<ProjectMetricValues> {
 		final Object[] parameter1 = new Object[]{"metrics", metrics};
 		
 		return getDoubleValueByQuery(query, parameter1);
+	}
+
+	@Override
+	public List<ProjectMetricValues> getAllMetricsTable(Metrics metrics) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		
+		return (List<ProjectMetricValues>) findByQuery(ProjectMetricValues.class, query, parameter1);
+	}
+	
+	@Override
+	public List<ProjectMetricValues> getMetricsTableByAuthor(Metrics metrics, Author author) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics and values.author.id = authorID";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		final Object[] parameter2 = new Object[]{"author", author.getId()};
+		
+		return (List<ProjectMetricValues>) findByQuery(ProjectMetricValues.class, query, parameter1, parameter2);
+	}
+
+	@Override
+	public List<ProjectMetricValues> getMetricsTableFromAuthorByEntries(Metrics metrics, Author author, Entry initialEntry, Entry finalEntry) throws DatabaseException {
+		final String query = "select values from entry_metrics values where values.associatedMetricsObject = :metrics and values.author.id = authorID and values.entry.id between initialEntryID and finalEntryID";
+		final Object[] parameter1 = new Object[]{"metricsSession", metrics};
+		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
+		final Object[] parameter3 = new Object[]{"initialEntryID", initialEntry.getId()};
+		final Object[] parameter4 = new Object[]{"finalEntryID", finalEntry.getId()};
+		
+		return (List<ProjectMetricValues>) findByQuery(ProjectMetricValues.class, query, parameter1, parameter2, parameter3, parameter4);
 	}
 }
