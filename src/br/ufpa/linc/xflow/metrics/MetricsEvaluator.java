@@ -33,10 +33,9 @@
 
 package br.ufpa.linc.xflow.metrics;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
@@ -46,13 +45,13 @@ import br.ufpa.linc.xflow.data.dao.metrics.MetricsDAO;
 import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
-import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Metrics;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.data.representation.jung.JUNGGraph;
+import br.ufpa.linc.xflow.data.representation.jung.JUNGVertex;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.metrics.entry.AddedFiles;
 import br.ufpa.linc.xflow.metrics.entry.DeletedFiles;
@@ -73,8 +72,6 @@ import br.ufpa.linc.xflow.metrics.project.ProjectMetricValues;
 
 public class MetricsEvaluator {
 
-	private Map<String, Long> fileMaps;
-	
 	private FileMetricModel[] fileMetrics = new FileMetricModel[]{
 			new Centrality(), new Betweenness(), new LOC()
 	};
@@ -88,6 +85,8 @@ public class MetricsEvaluator {
 	};
 	
 	private Metrics metricsSession;
+	
+	private Dependency initialDependency;
 
 	public MetricsEvaluator(){
 		JUNGGraph.clearVerticesCache();
@@ -114,15 +113,53 @@ public class MetricsEvaluator {
 			Dependency<FileDependencyObject, FileDependencyObject> entryDependency = new DependencyDAO().findDependencyByEntry(analysis.getId(), entry.getId(), Dependency.TASK_DEPENDENCY);
 			if(entryDependency != null){
 				if(analysis.checkCutoffValues(entry)){
+					calculateEntryMetrics(entry);
+					System.out.print("Entry metrics done!\n");
 					calculateGraphMetrics(entryDependency);
 					System.out.print("Graph metrics done!\n");
-					calculateEntryMetrics(entryDependency);
-					System.out.print("Entry metrics done!\n");
 				} else {
 					System.out.println("Revision skipped. Entry is not valid for current analysis.");
 				}
 			} else {
-				System.out.println("Revision skipped. No dependencies collected for selected entry.");
+				if(analysis.checkCutoffValues(entry)){
+					calculateEntryMetrics(entry);
+					System.out.print("Entry metrics done!\n");
+				}
+				System.out.println("Graph metrics evaluation skipped. No dependencies collected for selected entry.");
+			}
+		}
+
+		clearCaches();
+	}
+	
+	public void evaluateMetrics(final Analysis analysis, List<Entry> entries) throws DatabaseException {
+		System.out.println("Metric evaluation started.\n");
+		Metrics metrics = new Metrics();
+		metrics.setAssociatedAnalysis(analysis);
+		new MetricsDAO().insert(metrics);
+		this.metricsSession = metrics;
+//		this.metricsSession = new MetricsDAO().findById(Metrics.class, 4L);
+		
+		initiateCaches();
+		
+		for (Entry entry : entries) {
+			System.out.print("Evaluating revision "+entry.getRevision()+"\n");
+			Dependency<FileDependencyObject, FileDependencyObject> entryDependency = new DependencyDAO().findDependencyByEntry(analysis.getId(), entry.getId(), Dependency.TASK_DEPENDENCY);
+			if(entryDependency != null){
+				if(analysis.checkCutoffValues(entry)){
+					calculateEntryMetrics(entry);
+					System.out.print("Entry metrics done!\n");
+					calculateGraphMetrics3(entryDependency);
+					System.out.print("Graph metrics done!\n");
+				} else {
+					System.out.println("Revision skipped. Entry is not valid for current analysis.");
+				}
+			} else {
+				if(analysis.checkCutoffValues(entry)){
+					calculateEntryMetrics(entry);
+					System.out.print("Entry metrics done!\n");
+				}
+				System.out.println("Graph metrics evaluation skipped. No dependencies collected for selected entry.");
 			}
 		}
 
@@ -135,16 +172,11 @@ public class MetricsEvaluator {
 		
 		for (DependencySet<FileDependencyObject, FileDependencyObject> dependencySet : entryDependency.getDependencies()) {
 			FileDependencyObject fileDependency = dependencySet.getDependedObject();
-			if(fileMaps.containsKey(fileDependency.getFile().getPath())){
-				// Do nothing, file already on cache.
-			} else {
-				fileMaps.put(fileDependency.getFilePath(), fileDependency.getFile().getId());
-			}
 			
 			final FileMetricValues fileMetricTable = new FileMetricValues();
 			fileMetricTable.setAssociatedMetricsObject(metricsSession);
 			fileMetricTable.setEntry(entry);
-			fileMetricTable.setFileID(fileDependency.getFile().getId());
+			fileMetricTable.setFile(fileDependency.getFile());
 
 			calculateFileMetrics(dependencyGraph, fileDependency.getFile().getId(), fileMetricTable);
 
@@ -152,6 +184,55 @@ public class MetricsEvaluator {
 		}
 
 
+		final ProjectMetricValues projectMetricTable = new ProjectMetricValues();
+		projectMetricTable.setAssociatedMetricsObject(metricsSession);
+		projectMetricTable.setEntry(entry);
+
+		calculateProjectMetrics(dependencyGraph, projectMetricTable);
+		new ProjectMetricsDAO().insert(projectMetricTable);
+	}
+	
+	private void calculateGraphMetrics2(final Dependency<FileDependencyObject, FileDependencyObject> entryDependency) throws DatabaseException {
+		final Entry entry = entryDependency.getAssociatedEntry();
+		final JUNGGraph dependencyGraph = ((CoChangesAnalysis) metricsSession.getAssociatedAnalysis()).processDependencyGraph2(entryDependency);
+		
+		for (JUNGVertex vertex : dependencyGraph.getGraph().getVertices()) {
+			final ObjFile matrixFile = new ObjFileDAO().findById(ObjFile.class, vertex.getId());
+			final FileMetricValues fileMetricTable = new FileMetricValues();
+			fileMetricTable.setAssociatedMetricsObject(metricsSession);
+			fileMetricTable.setEntry(entry);
+			fileMetricTable.setFile(matrixFile);
+			calculateFileMetrics(dependencyGraph, vertex.getId(), fileMetricTable);
+			new FileMetricsDAO().insert(fileMetricTable);
+		}
+		
+		final ProjectMetricValues projectMetricTable = new ProjectMetricValues();
+		projectMetricTable.setAssociatedMetricsObject(metricsSession);
+		projectMetricTable.setEntry(entry);
+
+		calculateProjectMetrics(dependencyGraph, projectMetricTable);
+		new ProjectMetricsDAO().insert(projectMetricTable);
+	}
+	
+	private void calculateGraphMetrics3(final Dependency<FileDependencyObject, FileDependencyObject> entryDependency) throws DatabaseException {
+		if(initialDependency == null){
+			initialDependency = entryDependency;
+			return;
+		}
+		
+		final Entry entry = entryDependency.getAssociatedEntry();
+		final JUNGGraph dependencyGraph = ((CoChangesAnalysis) metricsSession.getAssociatedAnalysis()).processDependencyGraph3(initialDependency, entryDependency);
+		
+		for (JUNGVertex vertex : dependencyGraph.getGraph().getVertices()) {
+			final ObjFile matrixFile = new ObjFileDAO().findById(ObjFile.class, vertex.getId());
+			final FileMetricValues fileMetricTable = new FileMetricValues();
+			fileMetricTable.setAssociatedMetricsObject(metricsSession);
+			fileMetricTable.setEntry(entry);
+			fileMetricTable.setFile(matrixFile);
+			calculateFileMetrics(dependencyGraph, vertex.getId(), fileMetricTable);
+			new FileMetricsDAO().insert(fileMetricTable);
+		}
+		
 		final ProjectMetricValues projectMetricTable = new ProjectMetricValues();
 		projectMetricTable.setAssociatedMetricsObject(metricsSession);
 		projectMetricTable.setEntry(entry);
@@ -173,8 +254,7 @@ public class MetricsEvaluator {
 		}
 	}
 
-	private void calculateEntryMetrics(final Dependency<FileDependencyObject, FileDependencyObject>  entryDependency) throws DatabaseException {
-		final Entry entry = entryDependency.getAssociatedEntry();
+	private void calculateEntryMetrics(final Entry entry) throws DatabaseException {
 		final EntryMetricValues metricValues = new EntryMetricValues();
 		metricValues.setAuthor(entry.getAuthor());
 		metricValues.setAssociatedMetricsObject(metricsSession);
@@ -198,13 +278,11 @@ public class MetricsEvaluator {
 	}
 
 	private void clearCaches() {
-		fileMaps = null;
 		FileMetricModel.clearVerticesCache();
 	}
 	
 
 	private void initiateCaches() {
-		fileMaps = new HashMap<String, Long>();
 		FileMetricModel.initiateCache();
 	}
 }
