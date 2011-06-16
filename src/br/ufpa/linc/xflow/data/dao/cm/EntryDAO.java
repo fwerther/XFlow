@@ -91,6 +91,10 @@ public class EntryDAO extends BaseDAO<Entry>{
 
 	public Entry findEntryFromRevision(final Project project, final long revision) throws DatabaseException {
 		final String query = "SELECT entry FROM entry entry WHERE entry.revision = :revision AND entry.project.id = :project";
+		
+		//Sliding time window
+		//final String query = "SELECT entry FROM entry entry WHERE entry.revision = :revision AND entry.project.id = :project AND entry.id > 1541";
+		
 		final Object[] parameter1 = new Object[]{"revision", revision};
 		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		
@@ -157,8 +161,12 @@ public class EntryDAO extends BaseDAO<Entry>{
 		String query = 
 			"select e.revision FROM entry e WHERE " +
 			"e.project = :project AND " +
-			"e.revision BETWEEN :startrevision AND :endrevision AND " + 
+			"e.revision BETWEEN :startrevision AND :endrevision AND " +
 			"e.entryFiles IS NOT EMPTY";
+			//Sliding time window
+			//"e.entryFiles IS NOT EMPTY AND e.id > 1541";
+		
+		
 			
 		final Object[] parameter1 = new Object[]{"project", project};
 		final Object[] parameter2 = new Object[]{"startrevision", startRevision};
@@ -179,24 +187,16 @@ public class EntryDAO extends BaseDAO<Entry>{
 	
 	//TODO: not finished yet.
 	public ArrayList<Entry> getAllEntriesWithinDates(final Project project, final Date startDate, final Date finalDate) throws DatabaseException {
-//		if(project.isTemporalConsistencyForced()){
-//			final String query = "select e FROM entry e where e.project = :project order by e.revision";
-//			final Object[] parameter1 = new Object[]{"project", project};
-//			return null;
-//		}
-//		else{
-//			final String query = "select distinct e FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision";
-//			final Object[] parameter1 = new Object[]{"project", project};
-//			return null;
-//		}
-		
-		final String query = "select e FROM entry e where e.project.id = :projectID and e.date between :startDate AND :finalDate";
-		
-		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
-		final Object[] parameter2 = new Object[]{"startDate", startDate};
-		final Object[] parameter3 = new Object[]{"finalDate", finalDate};
-		
-		return (ArrayList<Entry>) findByQuery(Entry.class, query, parameter1, parameter2, parameter3);
+		if(project.isTemporalConsistencyForced()){
+			final String query = "select e FROM entry e where e.project = :project order by e.revision";
+			final Object[] parameter1 = new Object[]{"project", project};
+			return null;
+		}
+		else{
+			final String query = "select distinct e FROM entry e where e.project = :project AND e.revision between :startrevision AND :endrevision";
+			final Object[] parameter1 = new Object[]{"project", project};
+			return null;
+		}
 	}
 	
 	public int countEntryChangedFiles(final long entryID) throws DatabaseException{
@@ -280,16 +280,7 @@ public class EntryDAO extends BaseDAO<Entry>{
 		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
 	}
 	
-	public int countEntriesByRevisionsLimit(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
-		final String query = "SELECT COUNT(*) FROM entry e where e.project.id = :project AND e.revision >= :minorRevision AND e.revision <= :highestRevision";
-		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject().getId()};
-		final Object[] parameter2 = new Object[]{"minorRevision", firstEntry.getRevision()};
-		final Object[] parameter3 = new Object[]{"highestRevision", lastEntry.getRevision()};
-		
-		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
-	}
-	
-	public int getAuthorEntrySequenceNumber(final Entry entry) throws DatabaseException{
+	public int getEntrySequenceNumber(final Entry entry) throws DatabaseException{
 		final String query = "SELECT COUNT(*) FROM entry e where e.author = :author AND e.id <= :entryID";
 		final Object[] parameter1 = new Object[]{"author", entry.getAuthor()};
 		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
@@ -354,7 +345,7 @@ public class EntryDAO extends BaseDAO<Entry>{
 	}
 
 	public Date getHighestEntryDateByEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
-		final String query = "SELECT entry FROM entry entry WHERE entry.id = (select max(entry.date) FROM entry entry where entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID)";
+		final String query = "SELECT entry FROM entry entry WHERE entry.date = (select max(entry.date) FROM entry entry where entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID)";
 		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject()};
 		final Object[] parameter2 = new Object[]{"lowestID", firstEntry.getId()};
 		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getId()};
@@ -363,12 +354,12 @@ public class EntryDAO extends BaseDAO<Entry>{
 	}
 
 	public Date getMinorEntryDateByEntries(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
-		final String query = "SELECT entry FROM entry entry WHERE entry.id = (select min(entry.date) FROM entry entry where entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID)";
+		final String query = "SELECT entry FROM entry entry WHERE entry.date = (select min(entry.date) FROM entry entry where entry.project = :project AND entry.id >= :lowestID AND entry.id <= :highestID)";
 		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject()};
 		final Object[] parameter2 = new Object[]{"lowestID", firstEntry.getId()};
 		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getId()};
-		
-		return findUnique(Entry.class, query, parameter1, parameter2, parameter3).getDate();	
+		Entry entry = findUnique(Entry.class, query, parameter1, parameter2, parameter3); 
+		return entry.getDate();	
 	}
 	
 	public List<Entry> getNonBlankEntriesByAuthorSortedByDate(final Project project, final Author author) throws DatabaseException{
@@ -379,7 +370,19 @@ public class EntryDAO extends BaseDAO<Entry>{
 				"ORDER BY entry.date";
 		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
 		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
+		
 		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2);
 	}
+	
+	public List<Entry> getEntriesLimitedByNumFiles(final Project project, final int numFiles) throws DatabaseException{
+		final String query = "SELECT entry FROM entry entry WHERE " +
+		"entry.project.id = :projectID AND " +
+		"entry.entryFiles IS NOT EMPTY AND " +
+		"entry.entryFiles.size <= :size";
+		
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"size", numFiles};
 
+		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2);
+	}
 }
