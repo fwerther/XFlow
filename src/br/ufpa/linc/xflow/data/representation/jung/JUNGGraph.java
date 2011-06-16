@@ -79,7 +79,7 @@ public class JUNGGraph {
 				graph = transformCoordinationRequirementMatrixToDirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
 			else if(dependency.getType() == Dependency.TASK_ASSIGNMENT){
-				graph = transformTaskAssignmentMatrixToDirectedGraph(matrix, dependency.getAssociatedAnalysis());
+				graph = transformTaskAssignmentMatrixToUndirectedGraph(matrix, dependency.getAssociatedAnalysis());
 			}
 			else {
 				graph = transformTaskDependencyToDirectedGraph(matrix, dependency.getAssociatedAnalysis());
@@ -140,30 +140,33 @@ public class JUNGGraph {
 		}
 		
 		for (int i = 0; i < matrix.getRows(); i++) {
-			final AuthorDependencyObject dependedFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
+			final AuthorDependencyObject dependedEntity = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, i);
+			if(dependedEntity == null){
+				System.out.println("AHA!"+i);
+			}
 			final JUNGVertex vertex1;
-			if(verticesCache.containsKey(dependedFile.getAuthor().getId())){
-				vertex1 = verticesCache.get(dependedFile.getAuthor().getId());
+			if(verticesCache.containsKey(dependedEntity.getAuthor().getId())){
+				vertex1 = verticesCache.get(dependedEntity.getAuthor().getId());
 			} else {
 				vertex1 = new JUNGVertex();
-				vertex1.setId(dependedFile.getAuthor().getId());
-				vertex1.setName(dependedFile.getDependencyObjectName());
-				verticesCache.put(dependedFile.getAuthor().getId(), vertex1);
+				vertex1.setId(dependedEntity.getAuthor().getId());
+				vertex1.setName(dependedEntity.getDependencyObjectName());
+				verticesCache.put(dependedEntity.getAuthor().getId(), vertex1);
 				graph.addVertex(vertex1);
 			}
 			for (int j = i+1; j < matrix.getColumns(); j++) {
-				final int edgeWeight = matrix.get(i,j);
+				final int edgeWeight = matrix.getValueAt(i,j);
 				if(edgeWeight > 0){
-					final AuthorDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
+					final AuthorDependencyObject dependentEntity = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
 					final JUNGEdge edge = new JUNGEdge(edgeWeight);
 					final JUNGVertex vertex2;
-					if(verticesCache.containsKey(dependentFile.getAuthor().getId())){
-						vertex2 = verticesCache.get(dependentFile.getAuthor().getId());
+					if(verticesCache.containsKey(dependentEntity.getAuthor().getId())){
+						vertex2 = verticesCache.get(dependentEntity.getAuthor().getId());
 					} else {
 						vertex2 = new JUNGVertex();
-						vertex2.setId(dependentFile.getAuthor().getId());
-						vertex2.setName(dependentFile.getDependencyObjectName());
-						verticesCache.put(dependentFile.getAuthor().getId(), vertex2);
+						vertex2.setId(dependentEntity.getAuthor().getId());
+						vertex2.setName(dependentEntity.getDependencyObjectName());
+						verticesCache.put(dependentEntity.getAuthor().getId(), vertex2);
 						graph.addVertex(vertex2);
 					}
 					graph.addEdge(edge, vertex1, vertex2);
@@ -190,7 +193,7 @@ public class JUNGGraph {
 			vertex1.setName(dependedAuthor.getDependencyObjectName());
 			graph.addVertex(vertex1);
 			for (int j = 0; j < matrix.getColumns(); j++) {
-				final int edgeWeight = matrix.get(i, j);
+				final int edgeWeight = matrix.getValueAt(i, j);
 				if(edgeWeight > 0){
 					final FileDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j); 
 					final JUNGEdge edge = new JUNGEdge(edgeWeight);
@@ -227,7 +230,7 @@ public class JUNGGraph {
 				graph.addVertex(vertex1);
 			}
 			for (int j = i+1; j < matrix.getColumns(); j++) {
-				final int edgeWeight = matrix.get(i,j);
+				final int edgeWeight = matrix.getValueAt(i,j);
 				if(edgeWeight > 0){
 					final FileDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
 					final JUNGEdge edge = new JUNGEdge(edgeWeight);
@@ -274,7 +277,7 @@ public class JUNGGraph {
 					dependencyGraph.addVertex(vertex1);
 				}
 				for (int j = i+1; j < matrix.getColumns(); j++) {
-					final int edgeWeight = matrix.get(i,j);
+					final int edgeWeight = matrix.getValueAt(i,j);
 					if(edgeWeight > 0){
 						final FileDependencyObject dependentFile = fileDependencyDAO.findDependencyObjectByStamp(associatedAnalysis, j);
 						final JUNGEdge edge = new JUNGEdge(edgeWeight);
