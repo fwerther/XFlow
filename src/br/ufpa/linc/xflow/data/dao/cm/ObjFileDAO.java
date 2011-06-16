@@ -117,6 +117,8 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 				"WHERE f.path = :filePath " +
 				"AND entry.project.id = :project " +
 				"AND entry.id <= :entryID " +
+				//Sliding time window
+				//"AND entry.id > 1541 " +
 				"AND f.operationType = 'A')";
 		
 		final Object[] parameter1 = new Object[]{"filePath", filePath};
@@ -240,4 +242,11 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1);
 	}
 
+	public List<String> getFilePathsFromEntry(final Entry entry) throws DatabaseException{
+		final String query = "select f.path from file f where f.entry.id = :entryID";
+		final Object[] parameter1 = new Object[]{"entryID", entry.getId()};
+		
+		return (List<String>) findObjectsByQuery(query, parameter1);
+	}
+	
 }
