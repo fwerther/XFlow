@@ -50,7 +50,6 @@ public class Visualizer {
 		this.projectsViewer = ProjectViewer.createInstance(viewType);
 	}
 	
-	
 	public static ProjectViewer getProjectsViewer() {
 		return projectsViewer;
 	}
