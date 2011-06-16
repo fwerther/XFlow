@@ -394,4 +394,13 @@ public class EntryDAO extends BaseDAO<Entry>{
 
 		return (List<Entry>) findByQuery(Entry.class, query, parameter1, parameter2);
 	}
+
+	public int getAuthorEntrySequenceNumber(final Entry entry) throws DatabaseException {
+		final String query = "SELECT COUNT(*) FROM entry e where e.author = :author AND e.id <= :entryID";
+		final Object[] parameter1 = new Object[]{"author", entry.getAuthor()};
+		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
+		
+		return getIntegerValueByQuery(query, parameter1, parameter2);
+	}
+
 }
