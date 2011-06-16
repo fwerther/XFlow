@@ -2,6 +2,7 @@ package br.ufpa.linc.xflow.core.processors.callgraph;
 
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
@@ -23,12 +24,6 @@ public class CallGraphAnalysis extends Analysis{
 
 	@Transient
 	private Matrix matrixCache = null;
-	
-	@Transient
-	private Dependency dependencyCache = null;
-	
-	@Transient
-	private JUNGGraph graphCache = null;
 	
 	public CallGraphAnalysis(){
 		this.setType(AnalysisFactory.CALLGRAPH_ANALYSIS);
