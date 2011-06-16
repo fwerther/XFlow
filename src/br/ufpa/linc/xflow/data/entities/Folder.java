@@ -38,11 +38,14 @@ import javax.persistence.Entity;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
+import org.hibernate.annotations.Index;
+
 @Entity(name = "folder")
 public class Folder extends Resource implements Comparable<Folder>{
 
 	private static final long serialVersionUID = 8302324702620512851L;
 
+	@Index(name = "folder_path_index")
 	@Column(name = "FULL_PATH")
 	private String fullPath;
 
