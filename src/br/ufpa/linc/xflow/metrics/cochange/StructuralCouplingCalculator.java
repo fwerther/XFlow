@@ -68,8 +68,8 @@ public class StructuralCouplingCalculator {
 			for (int j = 0; j < matrix.getColumns(); j++) {	
 				if(i != j){
 					
-					int clientCalls = matrix.get(i,j);
-					int clientChanges = matrix.get(j,j);
+					int clientCalls = matrix.getValueAt(i,j);
+					int clientChanges = matrix.getValueAt(j,j);
 					
 					if(clientCalls > 0){
 						String client = filePathList.get(j);

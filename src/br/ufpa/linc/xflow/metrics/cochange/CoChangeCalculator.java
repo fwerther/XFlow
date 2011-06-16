@@ -64,14 +64,14 @@ public class CoChangeCalculator {
 		List<CoChange> coChangeList = new ArrayList<CoChange>();
 		for (int i = 0; i < matrix.getRows(); i++) {
 			String a = filePathList.get(i);
-			int aChanges = matrix.get(i,i);
+			int aChanges = matrix.getValueAt(i,i);
 			
 			for (int j = i+1; j < matrix.getColumns(); j++) {
-				int support = matrix.get(i,j);
+				int support = matrix.getValueAt(i,j);
 				
 				if(support > 0){
 					String b = filePathList.get(j);
-					int bChanges = matrix.get(j,j);
+					int bChanges = matrix.getValueAt(j,j);
 					
 					coChangeList.add(new CoChange(a, i, b, j, support, aChanges));
 					coChangeList.add(new CoChange(b, j, a, i, support, bChanges));
