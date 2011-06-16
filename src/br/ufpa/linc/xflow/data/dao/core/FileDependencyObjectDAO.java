@@ -165,4 +165,24 @@ public class FileDependencyObjectDAO extends DependencyObjectDAO<FileDependencyO
 				null : listFileDependencyObject.iterator().next();
 	}
 
+	public List<FileDependencyObject> findSuppliers(FileDependencyObject client, 
+			List<FileDependencyObject> excludedSuppliers) throws DatabaseException {
+		
+		String query = "SELECT DISTINCT dset.dependedObject FROM dependency_set dset " +
+				"JOIN dset.dependenciesMap AS map " +
+				"JOIN dset.associatedDependency AS assocDep " +
+				"WHERE index(map) = :client " +
+				"AND dset.dependedObject NOT IN :excludedSuppliers " +
+				"AND assocDep.associatedAnalysis.id = :associatedAnalysisID " +
+				"AND assocDep.type = :dependencyType";
+		
+		final Object[] parameter1 = new Object[]{"client", client};
+		final Object[] parameter2 = new Object[]{"excludedSuppliers", excludedSuppliers};
+		final Object[] parameter3 = new Object[]{"associatedAnalysisID", client.getAnalysis().getId()};
+		final Object[] parameter4 = new Object[]{"dependencyType", Dependency.TASK_DEPENDENCY};
+		
+		return (List<FileDependencyObject>) findByQuery(
+				FileDependencyObject.class, query, parameter1, parameter2, 
+				parameter3, parameter4);
+	}
 }
