@@ -35,7 +35,10 @@ package br.ufpa.linc.xflow.metrics.file;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 
+import br.ufpa.linc.xflow.data.entities.ObjFile;
 import br.ufpa.linc.xflow.metrics.MetricValuesTable;
 
 
@@ -54,15 +57,16 @@ public class FileMetricValues extends MetricValuesTable {
 	@Column(name = "LOC")
 	private int LOC;
 	
-	@Column(name = "FILE_ID")
-	private long fileID;
+	@ManyToOne
+	@JoinColumn(name = "FILE_ID")
+	private ObjFile fileID;
 	
 	
-	public void setFileID(long fileID) {
-		this.fileID = fileID;
+	public void setFile(ObjFile file) {
+		this.fileID = file;
 	}
 
-	public long getFileID() {
+	public ObjFile getFile() {
 		return fileID;
 	}
 	
