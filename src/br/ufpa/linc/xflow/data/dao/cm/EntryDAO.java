@@ -280,6 +280,15 @@ public class EntryDAO extends BaseDAO<Entry>{
 		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
 	}
 	
+	public int countEntriesByRevisionsLimit(final Entry firstEntry, final Entry lastEntry) throws DatabaseException {
+		final String query = "SELECT COUNT(*) FROM entry e where e.project = :project AND e.revision >= :minorID AND e.revision <= :highestID";
+		final Object[] parameter1 = new Object[]{"project", firstEntry.getProject()};
+		final Object[] parameter2 = new Object[]{"minorID", firstEntry.getRevision()};
+		final Object[] parameter3 = new Object[]{"highestID", lastEntry.getRevision()};
+		
+		return getIntegerValueByQuery(query, parameter1, parameter2, parameter3);
+	}
+	
 	public int getEntrySequenceNumber(final Entry entry) throws DatabaseException{
 		final String query = "SELECT COUNT(*) FROM entry e where e.author = :author AND e.id <= :entryID";
 		final Object[] parameter1 = new Object[]{"author", entry.getAuthor()};
