@@ -67,16 +67,23 @@ public class DataExtractor {
 		final long revisionsInterval = 1 + endRevision - startRevision;
 
 		if(revisionsInterval < 100){
-			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);			
-			transformer.transformData(project, dataCollected);
-			project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+			final List<Commit> dataCollected = connectionHandler.gatherData(startRevision, endRevision);
+			if(dataCollected.size() > 0){
+				transformer.transformData(project, dataCollected);
+				project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+			} else {
+				//FIXME: Try this exception properly.
+				throw new IndexOutOfBoundsException();
+			}
 		}
 		else {
 			for (int i = 0; i < (int)(revisionsInterval/100); i++) {
 				if(!processCanceled){
 					final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + (i*100), startRevision + ((i+1)*100) - 1);
-					transformer.transformData(project, dataCollected);
-					project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+					if(dataCollected.size() > 0){
+						transformer.transformData(project, dataCollected);
+						project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+					}
 				}
 				//FIXME:
 				//As we don't have an application layer yet, it is necessary 
@@ -85,8 +92,10 @@ public class DataExtractor {
 			}
 			if(((revisionsInterval%100) > 0) && (!processCanceled)){
 				final List<Commit> dataCollected = connectionHandler.gatherData(startRevision + ((int)(revisionsInterval/100)*100), endRevision);
-				transformer.transformData(project, dataCollected);
-				project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+				if(dataCollected.size() > 0){
+					transformer.transformData(project, dataCollected);
+					project.setLastRevision(dataCollected.get(dataCollected.size()-1).getRevisionNbr());
+				}
 			}
 		}
 		new ProjectDAO().update(project);
