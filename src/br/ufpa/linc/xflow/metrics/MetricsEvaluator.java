@@ -43,6 +43,7 @@ import br.ufpa.linc.xflow.data.dao.metrics.EntryMetricsDAO;
 import br.ufpa.linc.xflow.data.dao.metrics.FileMetricsDAO;
 import br.ufpa.linc.xflow.data.dao.metrics.MetricsDAO;
 import br.ufpa.linc.xflow.data.dao.metrics.ProjectMetricsDAO;
+import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
@@ -101,14 +102,26 @@ public class MetricsEvaluator {
 		
 		initiateCaches();
 		
-		final List<Entry> entries;
+		final List<Long> revisions;
 		if(analysis.isTemporalConsistencyForced()){
-			entries = new EntryDAO().getAllEntriesWithinEntries(analysis.getFirstEntry(), analysis.getLastEntry());
+			//Retrieving all entries is crazy, so we just look for revision numbers
+			//entries = new EntryDAO().getAllEntriesWithinEntries(analysis.getFirstEntry(), analysis.getLastEntry());
+			revisions = new EntryDAO().getAllRevisionsWithinEntries(
+					analysis.getFirstEntry(), 
+					analysis.getLastEntry(), 
+					0);
 		} else {
-			entries = new EntryDAO().getAllEntriesWithinRevisions(analysis.getProject(), analysis.getFirstEntry().getRevision(), analysis.getLastEntry().getRevision());
+			//Same from above
+			//entries = new EntryDAO().getAllEntriesWithinRevisions(analysis.getProject(), analysis.getFirstEntry().getRevision(), analysis.getLastEntry().getRevision());
+			revisions = new EntryDAO().getAllRevisionsWithinRevisions(
+					analysis.getProject(), 
+					analysis.getFirstEntry().getRevision(), 
+					analysis.getLastEntry().getRevision(),
+					0);
 		}
 		
-		for (Entry entry : entries) {
+		for (Long revisionNumber : revisions) {
+			final Entry entry = new EntryDAO().findEntryFromRevision(analysis.getProject(), revisionNumber);
 			System.out.print("Evaluating revision "+entry.getRevision()+"\n");
 			Dependency<FileDependencyObject, FileDependencyObject> entryDependency = new DependencyDAO().findDependencyByEntry(analysis.getId(), entry.getId(), Dependency.TASK_DEPENDENCY);
 			if(entryDependency != null){
@@ -127,6 +140,10 @@ public class MetricsEvaluator {
 				}
 				System.out.println("Graph metrics evaluation skipped. No dependencies collected for selected entry.");
 			}
+			//FIXME:
+			//As we don't have an application layer yet, it is necessary 
+			//to frequently clear the persistence context to avoid memory issues
+			DatabaseManager.getDatabaseSession().clear();
 		}
 
 		clearCaches();
