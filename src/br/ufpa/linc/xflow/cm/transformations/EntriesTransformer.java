@@ -61,7 +61,8 @@ public class EntriesTransformer {
 			System.out.print("Transforming commit "+commit.getRevisionNbr()+"\n");
 
 			if(commit.getArtifacts().isEmpty()){
-				System.out.println("Commit does not match data filter - Ignoring commit...");
+				System.out.println("Commit does not match data filter");
+				System.out.println("Ignoring commit...");
 			}
 			else{		
 				/*
