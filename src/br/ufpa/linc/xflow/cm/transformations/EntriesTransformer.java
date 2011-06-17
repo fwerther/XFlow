@@ -60,51 +60,56 @@ public class EntriesTransformer {
 			final Commit commit = commits.get(i);
 			System.out.print("Transforming commit "+commit.getRevisionNbr()+"\n");
 
-			/*
-			 *  AUTHOR INFO
-			 */
-			Author author = new AuthorDAO().findAuthorByName(project, commit.getAuthorName());
-			if (author == null){
-				author = new Author(commit.getAuthorName(), commit.getDate());
-				author.setProject(project);
-				new AuthorDAO().insert(author);
+			if(commit.getArtifacts().isEmpty()){
+				System.out.println("Commit does not match data filter - Ignoring commit...");
 			}
-			else{
-				author.setLastContribution(commit.getDate());
-				new AuthorDAO().update(author);
-			}
-
-			/*
-			 * ENTRY INFO
-			 */
-			final Entry currentlyProcessedEntry = new Entry();
-			currentlyProcessedEntry.setRevision(commit.getRevisionNbr());
-			currentlyProcessedEntry.setDate(commit.getDate());
-			if(commit.getLogMessage() == null){
-				currentlyProcessedEntry.setComment(" ");
-			}
-			else{
-				currentlyProcessedEntry.setComment(commit.getLogMessage());
-			}
-			currentlyProcessedEntry.setAuthor(author);
-			currentlyProcessedEntry.setProject(project);
-			entryDAO.insert(currentlyProcessedEntry);
-			
-			/*
-			 * ARTIFACTS INFO
-			 */
-			artifactTransformer.setProcessedEntry(currentlyProcessedEntry);
-			for (Artifact node : commit.getArtifacts()) {
-				if(node.getArtifactKind().equals("FILE")){
-					ObjFile file = artifactTransformer.gatherArtifactInfo(node);
-					new ObjFileDAO().insert(file);
-				} else {
-					artifactTransformer.gatherFolderInfo(node);
+			else{		
+				/*
+				 *  AUTHOR INFO
+				 */
+				Author author = new AuthorDAO().findAuthorByName(project, commit.getAuthorName());
+				if (author == null){
+					author = new Author(commit.getAuthorName(), commit.getDate());
+					author.setProject(project);
+					new AuthorDAO().insert(author);
 				}
+				else{
+					author.setLastContribution(commit.getDate());
+					new AuthorDAO().update(author);
+				}
+	
+				/*
+				 * ENTRY INFO
+				 */
+				final Entry currentlyProcessedEntry = new Entry();
+				currentlyProcessedEntry.setRevision(commit.getRevisionNbr());
+				currentlyProcessedEntry.setDate(commit.getDate());
+				if(commit.getLogMessage() == null){
+					currentlyProcessedEntry.setComment(" ");
+				}
+				else{
+					currentlyProcessedEntry.setComment(commit.getLogMessage());
+				}
+				currentlyProcessedEntry.setAuthor(author);
+				currentlyProcessedEntry.setProject(project);
+				entryDAO.insert(currentlyProcessedEntry);
+				
+				/*
+				 * ARTIFACTS INFO
+				 */
+				artifactTransformer.setProcessedEntry(currentlyProcessedEntry);
+				for (Artifact node : commit.getArtifacts()) {
+					if(node.getArtifactKind().equals("FILE")){
+						ObjFile file = artifactTransformer.gatherArtifactInfo(node);
+						new ObjFileDAO().insert(file);
+					} else {
+						artifactTransformer.gatherFolderInfo(node);
+					}
+				}
+				
+				//Update entry (due to added files)
+				entryDAO.update(currentlyProcessedEntry);
 			}
-			
-			//Update entry (due to added files)
-			entryDAO.update(currentlyProcessedEntry);
 		}
 	}
 
