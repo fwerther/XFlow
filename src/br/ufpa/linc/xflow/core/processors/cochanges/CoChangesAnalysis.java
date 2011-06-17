@@ -225,12 +225,13 @@ public final class CoChangesAnalysis extends Analysis {
 	public final Matrix processHistoricalDependencyMatrix(final Dependency dependency) throws DatabaseException {
 		if(!dependency.getDependencies().isEmpty()){
 			final List<DependencySet> dependencySets = new DependencySetDAO().getAllDependenciesSetUntilDependency(dependency);
-			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencySets, false);
-
-			//FIXME:
+			//final Matrix matrix = Converter.convertDependenciesToMatrix(dependencySets, false);
+			final Matrix matrix = Converter.convertDependenciesToMatrix(dependencySets, dependency.isDirectedDependency());
+			
+			//FIXME: (Move this code to the Calculators)
 			//As we don't have an application layer yet, it is necessary 
 			//to frequently clear the persistence context to avoid memory issues
-			DatabaseManager.getDatabaseSession().clear();
+			//DatabaseManager.getDatabaseSession().clear();
 			return matrix;
 		}
 		else{
