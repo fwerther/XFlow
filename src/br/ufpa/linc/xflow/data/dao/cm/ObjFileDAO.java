@@ -128,6 +128,34 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 		return findUnique(ObjFile.class, query, parameter1, parameter2, parameter3);
 	}
 	
+	public List<ObjFile> getAllAddedFilesUntilRevision(final Project project, final long revision) throws DatabaseException {
+		final String query = "SELECT f FROM file f " +
+			"JOIN f.entry AS entry " +
+			"WHERE f.operationType = 'A' " +
+			"AND entry.project.id = :projectID " +
+			"AND entry.revision <= :revision " +
+			"AND (f.deletedOn is null OR f.deletedOn.revision > :revision)";
+
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"revision", revision};
+
+		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1, parameter2);
+	}
+	
+	public List<ObjFile> getAllAddedFilesUntilEntry(final Project project, final Entry entry) throws DatabaseException {
+		final String query = "SELECT f FROM file f " +
+		"JOIN f.entry AS entry " +
+		"WHERE f.operationType = 'A' " +
+		"AND entry.project.id = :projectID " +
+		"AND entry.id <= :entryID " +
+		"AND (f.deletedOn is null OR f.deletedOn.id > :entryID)";
+
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
+		
+		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1, parameter2);
+	}
+	
 	public int getFileLOCUntilRevision(final Project project, final long revision, final String filePath) throws DatabaseException{
 		final String query = "SELECT f.totalLinesOfCode FROM file f WHERE f.id = " +
 				"(SELECT MAX(f.id) FROM file f " +
@@ -188,16 +216,15 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 	}
 	
 	public ArrayList<ObjFile> getFilesFromFolderUntilRevision(final long id, final long revision) throws DatabaseException {
-		final String query = "select f from file f where f.parentFolder.id = :parentId and f.operationType = 'A' and (f.deletedOn is null OR f.deletedOn.id > :revision)";
+		final String query = "select f from file f where f.parentFolder.id = :parentId and f.operationType = 'A'";
 		final Object[] parameter1 = new Object[]{"parentId", id};
-		final Object[] parameter2 = new Object[]{"revision", revision};
 		
-		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1, parameter2);
+		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1);
 	}
 
 	public ArrayList<ObjFile> getFilesFromFolderUntilSequence(Folder folder, long sequence) throws DatabaseException {
 		final Entry entry = new EntryDAO().findEntryFromSequence(folder.getEntry().getProject(), sequence);
-		final String query = "select f from file f where f.parentFolder.id = :parentID and f.operationType = 'A' and f.entry.id <= :entryID and (f.deletedOn is null OR f.deletedOn.id > :entryID)";
+		final String query = "select f from file f where f.parentFolder.id = :parentID and f.operationType = 'A' and f.entry.id <= :entryID and (f.deletedOn is not null OR f.deletedOn.id <= :entryID)";
 		final Object[] parameter1 = new Object[]{"parentID", folder.getId()};
 		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
 		
