@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
+import br.ufpa.linc.xflow.data.entities.ObjFile;
 
 public class StructuralCouplingIdentifier {
 
@@ -50,10 +51,10 @@ public class StructuralCouplingIdentifier {
 		}
 	}
 	
-	public static boolean checkStructuralCoupling(FileDependencyObject a, FileDependencyObject b){
+	public static boolean checkStructuralCoupling(ObjFile a, ObjFile b){
 		
-		String sourceCodeofA = a.getFile().getSourceCode();
-		String sourceCodeofB = b.getFile().getSourceCode();
+		String sourceCodeofA = a.getSourceCode();
+		String sourceCodeofB = b.getSourceCode();
 		
 		//If at least of the files is empty, there is nothing to be done
 		if (sourceCodeofA == null || sourceCodeofB == null){
@@ -69,7 +70,7 @@ public class StructuralCouplingIdentifier {
 				createAndFillFile(tmpFilepathForB, sourceCodeofB);
 				
 				//Calculates structural coupling (counts calls from A to B and vice-versa)
-				return checkCallsBetweenPairOfFiles(tmpFilepathForA, tmpFilepathForB, a.getFilePath(), b.getFilePath());
+				return checkCallsBetweenPairOfFiles(tmpFilepathForA, tmpFilepathForB, a.getPath(), b.getPath());
 
 			} catch (Exception e) {
 				System.out.println("Unable to calculate structural coupling");
