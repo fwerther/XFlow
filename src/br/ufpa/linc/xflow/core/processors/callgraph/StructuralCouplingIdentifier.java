@@ -64,8 +64,8 @@ public class StructuralCouplingIdentifier {
 		else{
 			try {
 				//Creates and fills temp files
-				String tmpFilepathForA = "/tmp/A.java";
-				String tmpFilepathForB = "/tmp/B.java";
+				String tmpFilepathForA = "/tmp2/A.java";
+				String tmpFilepathForB = "/tmp2/B.java";
 				createAndFillFile(tmpFilepathForA, sourceCodeofA);			
 				createAndFillFile(tmpFilepathForB, sourceCodeofB);
 				
@@ -159,35 +159,36 @@ public class StructuralCouplingIdentifier {
 //		Process process = runtime.exec("doxyparse" + " " + filepathA + " " + filepathB);
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		
-		String line;
-		while((line = bufferedReader.readLine()) != null){
-			line = line.trim();
-			//Found a module
-			if (modulePattern.matcher(line).matches()){
-				//Found the first module
-				if (currentModule == null){
-					currentModule = line.replace("module ", "");
-				}
-				//Found the second module and it's not an inner class
-				else if (currentModule != null && !line.contains(currentModule + "::")){
-					currentModule = line.replace("module ", "");
-					linkedList.addLast(refs);
-					refs = 0;
-				}
-			}
-			//Found a function call
-			else if(functionCallPattern.matcher(line).matches()){
-				String[] words = line.trim().split(" ");
-				String referredModule = words[words.length-1];
-				if(!currentModule.equals(referredModule)){
-					refs++;
-					bufferedReader.close();
-					process.destroy();
-					return true;
-				}
-			}
-		}
+        boolean aDependsOnB = false;
+        boolean finishScanOfA = false;
 
-		return false;
+        String line;
+        while((line = bufferedReader.readLine()) != null && !finishScanOfA){
+                line = line.trim();
+                //Found a module
+                if (modulePattern.matcher(line).matches()){
+                        //Found the first module
+                        if (currentModule == null){
+                                currentModule = line.replace("module ", "");
+                        }
+                        //Found the second module and it's not an inner class
+                        else if (currentModule != null && !line.contains(currentModule + "::")){
+                                if (refs > 0 ) aDependsOnB = true;
+                                finishScanOfA = true;
+                        }
+                }
+                //Found a function call
+                else if(functionCallPattern.matcher(line).matches()){
+                        String[] words = line.trim().split(" ");
+                        String referredModule = words[words.length-1];
+                        if(!currentModule.equals(referredModule)){
+                                refs++;
+                        }
+                }
+        }
+
+        bufferedReader.close();
+        process.destroy();
+        return aDependsOnB;
 	}
 }

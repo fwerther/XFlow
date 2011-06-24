@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import br.ufpa.linc.xflow.core.processors.DependenciesIdentifier;
+import br.ufpa.linc.xflow.data.dao.cm.AuthorDAO;
 import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
@@ -49,16 +50,38 @@ public class CallGraphCollector implements DependenciesIdentifier {
 		
 		for (Long revision : revisions) {
 		
-			final Entry entry = entryDAO.findEntryFromRevision(analysis.getProject(), revision);			
+			final Entry entry = entryDAO.findEntryFromRevision(analysis.getProject(), revision);
+//			final Entry entry = entryDAO.findById(Entry.class, revision);
 
 			System.out.print("- Processing entry: "+entry.getRevision()+" ("+revision+")\n");
 			System.out.print("* Collecting file dependencies...");
-					
-			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> structuralDependencies = 
-				gatherStructuralDependencies(entry.getEntryFiles());
+			
+			final List<ObjFile> studiedFiles;
+			if(this.analysis.isWholeSystemSnapshot()){
+				if(this.analysis.isTemporalConsistencyForced()){
+					studiedFiles = new ObjFileDAO().getAllAddedFilesUntilEntry(entry.getProject(), entry);
+				} else {
+					studiedFiles = new ObjFileDAO().getAllAddedFilesUntilRevision(entry.getProject(), entry.getRevision());
+				}
+			} else {
+				studiedFiles = entry.getEntryFiles();
+			}
+			
+			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> structuralDependencies; 
+			if(this.analysis.isWholeSystemSnapshot()){
+				structuralDependencies = gatherStructuralDependencies(studiedFiles, entry, true);
+			} else {
+				structuralDependencies = gatherStructuralDependencies(studiedFiles, entry);
+			}
 			
 			System.out.println("* Collecting author dependencies...");
-			final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> taskAssignmentDependencies = gatherTaskAssignmentDependencies(entry.getAuthor(), structuralDependencies); 
+			
+			final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> taskAssignmentDependencies;
+			if(this.analysis.isWholeSystemSnapshot()){
+				taskAssignmentDependencies = gatherWholeTaskAssignmentDependencies(entry);
+			} else {
+				taskAssignmentDependencies = gatherTaskAssignmentDependencies(entry.getAuthor(), structuralDependencies);
+			}
 					
 			if(structuralDependencies.size() > 0) { 
 				final TaskDependency taskDependency = new TaskDependency(true);
@@ -88,6 +111,54 @@ public class CallGraphCollector implements DependenciesIdentifier {
 		
 	}
 
+	private Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> gatherWholeTaskAssignmentDependencies(Entry entry) throws DatabaseException {
+		final AuthorDependencyObjectDAO authorDependencyDAO = new AuthorDependencyObjectDAO();
+		final Set<DependencySet<AuthorDependencyObject, FileDependencyObject>> dependenciesSet = new HashSet<DependencySet<AuthorDependencyObject, FileDependencyObject>>();
+		final List<Author> developers = new AuthorDAO().getProjectAuthorsUntilEntry(this.analysis.getProject().getId(), entry.getId(), this.analysis.isTemporalConsistencyForced());
+		
+		for (Author author : developers) {
+			
+			final AuthorDependencyObject dependedAuthor;
+			if(authorsStampsMap.containsKey(author.getName())){
+				dependedAuthor = (AuthorDependencyObject) authorsStampsMap.get(author.getName());
+			} else {
+				latestAuthorStampAssigned++;
+				
+				dependedAuthor = new AuthorDependencyObject();
+				dependedAuthor.setAnalysis(analysis);
+				dependedAuthor.setAssignedStamp(latestAuthorStampAssigned);
+				dependedAuthor.setAuthor(author);
+				
+				authorDependencyDAO.insert(dependedAuthor);
+				authorsStampsMap.put(author.getName(), dependedAuthor);
+			}
+			
+			
+			final List<ObjFile> filesChanged;
+			if(this.analysis.isTemporalConsistencyForced()){
+				filesChanged = new ObjFileDAO().getAllAddedFilesUntilEntryByAuthor(author.getProject(), entry, author);
+			} else {
+				filesChanged = new ObjFileDAO().getAllAddedFilesUntilRevisionByAuthor(author.getProject(), entry.getRevision(), author);	
+			}
+			
+			for (ObjFile objFile : filesChanged) {
+				FileDependencyObject dependencyObject =  new FileDependencyObjectDAO().findDependencyObjectByFilePath(analysis, objFile.getPath());
+				
+					
+				//Builds the set of dependency objects
+				final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
+				dependenciesMap.put(dependencyObject, 1);
+
+				DependencySet<AuthorDependencyObject, FileDependencyObject> dependencySet = new DependencySet<AuthorDependencyObject, FileDependencyObject>();
+				dependencySet.setDependedObject(dependedAuthor);
+				dependencySet.setDependenciesMap(dependenciesMap);
+				dependenciesSet.add(dependencySet);
+			}
+		}
+		
+		return dependenciesSet;	
+	}
+
 	private void initiateCache() throws DatabaseException {
 		latestFileStampAssigned = new FileDependencyObjectDAO().checkHighestStamp(analysis);
 		latestAuthorStampAssigned = new AuthorDependencyObjectDAO().checkHighestStamp(analysis);
@@ -95,67 +166,97 @@ public class CallGraphCollector implements DependenciesIdentifier {
 		authorsStampsMap = new HashMap<String, AuthorDependencyObject>();
 	}
 	
-	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles) throws DatabaseException {
+	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles, Entry entry) throws DatabaseException {
 
 		//Builds the list of dependency objects
 		final Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
 
 		final List<ObjFile> allProjectFiles;
 		if(this.analysis.isTemporalConsistencyForced()){
-			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilEntry(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry());
+			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilEntry(entry.getProject(), entry);
 		} else {
-			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilRevision(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry().getRevision());
+			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilRevision(entry.getProject(), entry.getRevision());
 		}
 
-		boolean flag = false;
 		for (int i = 0; i < changedFiles.size(); i++) {
 			if(filter.match(changedFiles.get(i).getPath())){
-				final FileDependencyObject changedFileDO = findFileDependencyObjectInstance(changedFiles.get(i), flag);
 				final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
-				
+				final FileDependencyObject changedFileDO = findFileDependencyObjectInstance(changedFiles.get(i), entry);
 				final ObjFile changedFile;
-				if(changedFiles.get(i).getOperationType() == 'A'){
-					changedFile = changedFiles.get(i);
+				
+				if(this.analysis.isTemporalConsistencyForced()){
+					changedFile = new ObjFileDAO().findFileByPathUntilEntry(entry.getProject(), entry, changedFileDO.getFilePath());
 				} else {
-					if(this.analysis.isTemporalConsistencyForced()){
-						changedFile = new ObjFileDAO().findFileByPathUntilEntry(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry(), changedFiles.get(i).getPath());
-						System.out.println(changedFile.getSourceCode());
-					} else {
-						changedFile = new ObjFileDAO().findFileByPathUntilRevision(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry().getRevision(), changedFiles.get(i).getPath());
-					}
+					changedFile = new ObjFileDAO().findFileByPathUntilRevision(entry.getProject(), entry.getRevision(), changedFileDO.getFilePath());
 				}
-
+				
 				for (ObjFile objFile : allProjectFiles) {
 					if(filter.match(objFile.getPath())){
-						final DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
-						dependencySet.setDependedObject(changedFileDO);
-
-						if(objFile.getId() == changedFiles.get(i).getId()){
-							dependenciesMap.put(changedFileDO, 1);
+						final FileDependencyObject otherFileDO = findFileDependencyObjectInstance(objFile, entry);
+						final ObjFile otherFile;
+							
+						if(this.analysis.isTemporalConsistencyForced()){
+							otherFile = new ObjFileDAO().findFileByPathUntilEntry(entry.getProject(), entry, otherFileDO.getFilePath());
 						} else {
-							final FileDependencyObject otherFileDO = findFileDependencyObjectInstance(objFile, flag);
-							final ObjFile otherFile;
-							if(objFile.getOperationType() == 'A'){
-								otherFile = objFile;
-							} else {
-								if(this.analysis.isTemporalConsistencyForced()){
-									otherFile = new ObjFileDAO().findFileByPathUntilEntry(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry(), otherFileDO.getFilePath());
-									System.out.println(otherFile.getSourceCode());
-								} else {
-									otherFile = new ObjFileDAO().findFileByPathUntilRevision(changedFiles.get(0).getEntry().getProject(), changedFiles.get(0).getEntry().getRevision(), otherFileDO.getFilePath());
-								}
-							}
-							if(StructuralCouplingIdentifier.checkStructuralCoupling(changedFileDO.getFile(), otherFile)){
-								dependenciesMap.put(otherFileDO, 1);
-							}
-						} 
+							otherFile = new ObjFileDAO().findFileByPathUntilRevision(entry.getProject(), entry.getRevision(), otherFileDO.getFilePath());
+						}
 						
-						dependencySet.setDependenciesMap(dependenciesMap);
-						setOfDependencySets.add(dependencySet);
+						if(StructuralCouplingIdentifier.checkStructuralCoupling(changedFile, otherFile)){
+							final DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
+							dependencySet.setDependedObject(otherFileDO);
+							dependenciesMap.put(changedFileDO, 1);
+							dependencySet.setDependenciesMap(dependenciesMap);
+							setOfDependencySets.add(dependencySet);
+						}
 					}
 				}
 			}
-			flag = true;
+		}
+		
+		return setOfDependencySets;
+	}
+	
+	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles, Entry entry, boolean wholeSystem) throws DatabaseException {
+
+		//Builds the list of dependency objects
+		final Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
+
+		final List<ObjFile> allProjectFiles;
+		if(this.analysis.isTemporalConsistencyForced()){
+			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilEntry(entry.getProject(), entry);
+		} else {
+			allProjectFiles = new ObjFileDAO().getAllAddedFilesUntilRevision(entry.getProject(), entry.getRevision());
+		}
+
+		for (int i = 0; i < changedFiles.size(); i++) {
+			if(filter.match(changedFiles.get(i).getPath())){
+				final FileDependencyObject changedFileDO = findFileDependencyObjectInstance(changedFiles.get(i), entry);
+				final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
+				
+				int j = 0;
+				for (ObjFile objFile : allProjectFiles) {
+					j++;
+					System.out.println("currently processing "+j+" of "+changedFiles.size()+" ("+i+"th iteration)");
+					if(filter.match(objFile.getPath())){
+						final FileDependencyObject otherFileDO = findFileDependencyObjectInstance(objFile, entry);
+						final ObjFile otherFile;
+						
+						if(this.analysis.isTemporalConsistencyForced()){
+							otherFile = new ObjFileDAO().findFileByPathUntilEntry(entry.getProject(), entry, otherFileDO.getFilePath());
+						} else {
+							otherFile = new ObjFileDAO().findFileByPathUntilRevision(entry.getProject(), entry.getRevision(), otherFileDO.getFilePath());
+						}
+						
+						if(StructuralCouplingIdentifier.checkStructuralCoupling(otherFile, changedFileDO.getFile())){
+							final DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
+							dependencySet.setDependedObject(changedFileDO);
+							dependenciesMap.put(otherFileDO, 1);
+							dependencySet.setDependenciesMap(dependenciesMap);
+							setOfDependencySets.add(dependencySet);
+						}
+					}
+				}
+			}
 		}
 		
 		return setOfDependencySets;
@@ -194,12 +295,12 @@ public class CallGraphCollector implements DependenciesIdentifier {
 	    return dependenciesSet;
 	}
 
-	private FileDependencyObject findFileDependencyObjectInstance(ObjFile changedFile, boolean flag) throws DatabaseException {
+	private FileDependencyObject findFileDependencyObjectInstance(ObjFile changedFile, Entry entry) throws DatabaseException {
 		FileDependencyObject dependencyObject;
 		FileDependencyObjectDAO dependencyObjDAO = new FileDependencyObjectDAO();
 
-		//Added file
-		if(changedFile.getOperationType() == 'A' && !flag){
+		dependencyObject = new FileDependencyObjectDAO().findDependencyObjectByFilePath(this.analysis, changedFile.getPath());
+		if(dependencyObject == null){
 			latestFileStampAssigned++;
 
 			dependencyObject = new FileDependencyObject();
@@ -209,18 +310,16 @@ public class CallGraphCollector implements DependenciesIdentifier {
 			dependencyObject.setAssignedStamp(latestFileStampAssigned);
 
 			dependencyObjDAO.insert(dependencyObject);
-
-			//Modified or deleted file
 		} else {
-
-			//Search database for matching FileDependencyObject 
-			dependencyObject =  dependencyObjDAO.findDependencyObjectByFilePath(analysis, changedFile.getPath());
-
-			if (dependencyObject == null){
-				ObjFile addedFileReference = 
-					new ObjFileDAO().findAddedFileByPathUntilEntry(analysis.getProject(), changedFile.getEntry(), changedFile.getPath());
-
-				if(addedFileReference != null){
+			if(changedFile.getOperationType() == 'A'){
+				
+				final ObjFile file;
+				if(this.analysis.isTemporalConsistencyForced()){
+					file = new ObjFileDAO().findAddedFileByPathUntilEntry(entry.getProject(), entry, changedFile.getPath());
+				} else {
+					file = new ObjFileDAO().findAddedFileByPathUntilRevision(entry.getProject(), entry.getRevision(), changedFile.getPath());
+				}
+				if(file != changedFile) {
 					latestFileStampAssigned++;
 
 					dependencyObject = new FileDependencyObject();
@@ -232,12 +331,9 @@ public class CallGraphCollector implements DependenciesIdentifier {
 					dependencyObjDAO.insert(dependencyObject);
 				}
 			}
-			else{
-				dependencyObject.setFile(changedFile);
-			}
 		}
 		
-		return dependencyObject;
+		return dependencyObject;		
 	}
 	
 	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependenciesOld(List<ObjFile> changedFiles) throws DatabaseException {
