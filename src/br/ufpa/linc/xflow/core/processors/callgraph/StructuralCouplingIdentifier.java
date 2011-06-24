@@ -64,8 +64,8 @@ public class StructuralCouplingIdentifier {
 		else{
 			try {
 				//Creates and fills temp files
-				String tmpFilepathForA = "/tmp2/A.java";
-				String tmpFilepathForB = "/tmp2/B.java";
+				String tmpFilepathForA = "/tmp/A.java";
+				String tmpFilepathForB = "/tmp/B.java";
 				createAndFillFile(tmpFilepathForA, sourceCodeofA);			
 				createAndFillFile(tmpFilepathForB, sourceCodeofB);
 				
@@ -150,13 +150,10 @@ public class StructuralCouplingIdentifier {
 		Pattern functionCallPattern = Pattern.compile("uses function.*defined in.*");
 		String currentModule = null;
 		int refs = 0;
-		
-		filepathA = "/cygdrive/d"+filepathA;
-		filepathB = "/cygdrive/d"+filepathB;
-		
+				
 		Runtime runtime = Runtime.getRuntime();
-		Process process = runtime.exec("D:\\cygwin\\home\\Francisco\\doxyparse\\bin\\doxyparse" + " " + filepathA + " " + filepathB);
-//		Process process = runtime.exec("doxyparse" + " " + filepathA + " " + filepathB);
+//		Process process = runtime.exec("D:\\cygwin\\home\\Francisco\\doxyparse\\bin\\doxyparse" + " " + filepathA + " " + filepathB);
+		Process process = runtime.exec("doxyparse" + " " + filepathA + " " + filepathB);
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		
         boolean aDependsOnB = false;

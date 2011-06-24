@@ -14,11 +14,13 @@ import br.ufpa.linc.xflow.data.dao.cm.EntryDAO;
 import br.ufpa.linc.xflow.data.dao.cm.ObjFileDAO;
 import br.ufpa.linc.xflow.data.dao.core.AuthorDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.DependencyDAO;
+import br.ufpa.linc.xflow.data.dao.core.DependencySetDAO;
 import br.ufpa.linc.xflow.data.dao.core.FileDependencyObjectDAO;
 import br.ufpa.linc.xflow.data.database.DatabaseManager;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
+import br.ufpa.linc.xflow.data.entities.DependencyObject;
 import br.ufpa.linc.xflow.data.entities.DependencySet;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.FileDependencyObject;
@@ -167,8 +169,8 @@ public class CallGraphCollector implements DependenciesIdentifier {
 	}
 	
 	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles, Entry entry) throws DatabaseException {
-
-		//Builds the list of dependency objects
+	
+		DependencySetDAO dependencySetDAO = new DependencySetDAO();
 		final Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets = new HashSet<DependencySet<FileDependencyObject, FileDependencyObject>>();
 
 		final List<ObjFile> allProjectFiles;
@@ -180,7 +182,6 @@ public class CallGraphCollector implements DependenciesIdentifier {
 
 		for (int i = 0; i < changedFiles.size(); i++) {
 			if(filter.match(changedFiles.get(i).getPath())){
-				final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
 				final FileDependencyObject changedFileDO = findFileDependencyObjectInstance(changedFiles.get(i), entry);
 				final ObjFile changedFile;
 				
@@ -201,12 +202,21 @@ public class CallGraphCollector implements DependenciesIdentifier {
 							otherFile = new ObjFileDAO().findFileByPathUntilRevision(entry.getProject(), entry.getRevision(), otherFileDO.getFilePath());
 						}
 						
-						if(StructuralCouplingIdentifier.checkStructuralCoupling(changedFile, otherFile)){
-							final DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
-							dependencySet.setDependedObject(otherFileDO);
-							dependenciesMap.put(changedFileDO, 1);
-							dependencySet.setDependenciesMap(dependenciesMap);
-							setOfDependencySets.add(dependencySet);
+						boolean hasDep = StructuralCouplingIdentifier.checkStructuralCoupling(changedFile, otherFile);
+						
+						//If otherFile is a supplier of changedFile 
+						if(dependencySetDAO.isSupplier(this.analysis, changedFileDO, otherFileDO)){
+							//If the dependency is gone
+							if(!hasDep){
+								handleDependency(setOfDependencySets, changedFileDO, otherFileDO, 0);								
+							}
+						}
+						//If otherFile is not a supplier of changedFile
+						else{
+							//If a dependency came up
+							if(hasDep){
+								handleDependency(setOfDependencySets, changedFileDO, otherFileDO, 1);	
+							}
 						}
 					}
 				}
@@ -214,6 +224,36 @@ public class CallGraphCollector implements DependenciesIdentifier {
 		}
 		
 		return setOfDependencySets;
+	}
+
+	private void handleDependency(
+			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets,
+			final FileDependencyObject client,
+			final FileDependencyObject supplier, 
+			final Integer degree) {
+		
+		DependencySet<FileDependencyObject, FileDependencyObject> dependencySet = searchForDependencySetofASupplier(setOfDependencySets, supplier);
+		if (dependencySet == null){
+			dependencySet = new DependencySet<FileDependencyObject, FileDependencyObject>();
+			dependencySet.setDependedObject(supplier);
+			final Map<FileDependencyObject, Integer> dependenciesMap = new HashMap<FileDependencyObject, Integer>();
+			dependenciesMap.put(client, degree);
+			dependencySet.setDependenciesMap(dependenciesMap);
+			setOfDependencySets.add(dependencySet);	
+		}
+		else{
+			Map<FileDependencyObject, Integer> dependenciesMap = (Map<FileDependencyObject, Integer>) dependencySet.getDependenciesMap();
+			dependenciesMap.put(client, degree);
+		}
+	}
+	
+	private DependencySet<FileDependencyObject, FileDependencyObject> searchForDependencySetofASupplier(Set<DependencySet<FileDependencyObject, FileDependencyObject>> setOfDependencySets, FileDependencyObject supplier){
+		for (DependencySet<FileDependencyObject, FileDependencyObject> dependencySet : setOfDependencySets){
+			if (dependencySet.getDependedObject().equals(supplier)){
+				return dependencySet;
+			}
+		}
+		return null;
 	}
 	
 	private Set<DependencySet<FileDependencyObject, FileDependencyObject>> gatherStructuralDependencies(List<ObjFile> changedFiles, Entry entry, boolean wholeSystem) throws DatabaseException {

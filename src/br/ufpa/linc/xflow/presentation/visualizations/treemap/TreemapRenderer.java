@@ -51,6 +51,7 @@ import br.ufpa.linc.xflow.presentation.commons.util.prefuse.LabelLayout;
 import br.ufpa.linc.xflow.presentation.commons.util.prefuse.NodeRenderer;
 import br.ufpa.linc.xflow.presentation.commons.util.prefuse.TreeMapColorAction;
 import br.ufpa.linc.xflow.presentation.visualizations.VisualizationRenderer;
+import br.ufpa.linc.xflow.presentation.visualizations.treemap.controls.TooltipControl;
 
 public class TreemapRenderer implements VisualizationRenderer<TreemapVisualization> {
 
@@ -187,7 +188,7 @@ public class TreemapRenderer implements VisualizationRenderer<TreemapVisualizati
 		display.setSize(700,600);
 		display.setHighQuality(true);
 		display.setItemSorter(new TreeDepthItemSorter(true));
-		display.addControlListener(new br.ufpa.linc.xflow.presentation.visualizations.treemap.controls.TooltipControl());
+		display.addControlListener(new TooltipControl());
 		
 		display.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
