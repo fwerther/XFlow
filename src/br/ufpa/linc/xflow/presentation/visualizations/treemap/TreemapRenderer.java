@@ -69,6 +69,7 @@ public class TreemapRenderer implements VisualizationRenderer<TreemapVisualizati
 	
 	@Override
 	public void composeVisualization(JComponent visualizationComponent) throws DatabaseException {
+		System.out.println("treemap started!");
 		this.metricsSession = (Metrics) visualizationComponent.getClientProperty("Metrics Session");
 		treemap = TreeHierarchyBuilder.createTreeMapGraph(this.metricsSession.getAssociatedAnalysis(), this.metricsSession.getAssociatedAnalysis().getLastEntry());
 		visualizationComponent.add(this.draw(), BorderLayout.CENTER);
@@ -186,6 +187,7 @@ public class TreemapRenderer implements VisualizationRenderer<TreemapVisualizati
 		display.setSize(700,600);
 		display.setHighQuality(true);
 		display.setItemSorter(new TreeDepthItemSorter(true));
+		display.addControlListener(new br.ufpa.linc.xflow.presentation.visualizations.treemap.controls.TooltipControl());
 		
 		display.addComponentListener(new ComponentAdapter() {
 			public void componentResized(ComponentEvent e) {
@@ -321,17 +323,19 @@ public class TreemapRenderer implements VisualizationRenderer<TreemapVisualizati
 			String lastAuthor = lastSelectedAuthor[lastSelectedAuthor.length-2];
 			AuthorDAO authorDAO = new AuthorDAO();
 			Author author = authorDAO.findAuthorByName(metricsSession.getAssociatedAnalysis().getProject(), lastAuthor);
-			List<Long> filesNamesList = authorDAO.getAuthorChangedFilesPath(author, this.metricsSession.getAssociatedAnalysis().getLastEntry());
+			List<String> filesNamesList = authorDAO.getAuthorChangedFilesPath(author, this.metricsSession.getAssociatedAnalysis().getLastEntry());
 
 			StringBuffer highlightFilesQuery = new StringBuffer();
 			int counter = 0;
-			for (Long fileName : filesNamesList) {
+			for (String fileName : filesNamesList) {
 				counter++;
-				System.out.println(fileName);
-				highlightFilesQuery.append("F"+fileName+" | ");
+				highlightFilesQuery.append(fileName+" | ");
 			}
+			System.out.println(highlightFilesQuery);
 			System.out.println(counter);
 			this.getFilesNameSearchPanel().setQuery(highlightFilesQuery.toString());
+		} else {
+			this.getFilesNameSearchPanel().setQuery("");
 		}
 	}
 	
