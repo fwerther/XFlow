@@ -123,7 +123,7 @@ public class FolderDAO extends BaseDAO<Folder> {
 	public ArrayList<Folder> findSubFoldersUntilSequence(final long folderID, final long sequence) throws DatabaseException {
 		final Folder folder = findById(Folder.class, folderID);
 		final Entry entry = new EntryDAO().findEntryFromSequence(folder.getEntry().getProject(), sequence);
-		final String query = "select f from folder f where f.parentFolder.id = :parentID and f.entry.project.id = :projectID and f.entry.id <= :entryID";
+		final String query = "select f from folder f where f.parentFolder.id = :parentID and f.entry.project.id = :projectID and f.entry.id <= :entryID and f.fullPath like '%trunk%'";
 
 		final Object[] parameter1 = new Object[]{"parentID", folderID};
 		final Object[] parameter2 = new Object[]{"projectID", folder.getEntry().getProject().getId()};

@@ -131,12 +131,13 @@ public class AuthorDAO extends BaseDAO<Author>{
 		return (ArrayList<Long>) findObjectsByQuery(query, parameter1, parameter2);
 	}
 	
-	public final List<Long> getAuthorChangedFilesPath(final Author author, final Entry entry) throws DatabaseException {
-		final String query = "SELECT DISTINCT f.id from file f where f.entry <= :entry and f.entry.author = :author";
-		final Object[] parameter1 = new Object[]{"author", author};
-		final Object[] parameter2 = new Object[]{"entry", entry};
+	public final List<String> getAuthorChangedFilesPath(final Author author, final Entry entry) throws DatabaseException {
+		final String query = "SELECT f.path from file f where f.entry.id <= :entryID and f.entry.author.id = :authorID";
+		final Object[] parameter1 = new Object[]{"entryID", entry.getId()};
+		final Object[] parameter2 = new Object[]{"authorID", author.getId()};
 		
-		return (List<Long>) findObjectsByQuery(query, parameter1, parameter2);
+		
+		return (List<String>) findObjectsByQuery(query, parameter1, parameter2);
 	}
 
 	public final long getLatestAuthorSequenceNumber(final Author author) throws DatabaseException {

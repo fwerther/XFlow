@@ -39,6 +39,7 @@ import java.util.Date;
 import java.util.List;
 
 import br.ufpa.linc.xflow.data.dao.BaseDAO;
+import br.ufpa.linc.xflow.data.entities.Author;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Folder;
 import br.ufpa.linc.xflow.data.entities.ObjFile;
@@ -124,6 +125,24 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 		final Object[] parameter1 = new Object[]{"filePath", filePath};
 		final Object[] parameter2 = new Object[]{"project", project.getId()};
 		final Object[] parameter3 = new Object[]{"entryID", entry.getId()};
+		
+		return findUnique(ObjFile.class, query, parameter1, parameter2, parameter3);
+	}
+	
+	public ObjFile findAddedFileByPathUntilRevision(final Project project, final long revision, final String filePath) throws DatabaseException {
+		final String query = "SELECT f FROM file f WHERE f.id = " +
+				"(SELECT MAX(f.id) FROM file f " +
+				"JOIN f.entry AS entry " +
+				"WHERE f.path = :filePath " +
+				"AND entry.project.id = :project " +
+				"AND entry.revision <= :revision " +
+				//Sliding time window
+				//"AND entry.id > 1541 " +
+				"AND f.operationType = 'A')";
+		
+		final Object[] parameter1 = new Object[]{"filePath", filePath};
+		final Object[] parameter2 = new Object[]{"project", project.getId()};
+		final Object[] parameter3 = new Object[]{"revision", revision};
 		
 		return findUnique(ObjFile.class, query, parameter1, parameter2, parameter3);
 	}
@@ -275,5 +294,38 @@ public class ObjFileDAO extends BaseDAO<ObjFile> {
 		
 		return (List<String>) findObjectsByQuery(query, parameter1);
 	}
-	
+
+	public List<ObjFile> getAllAddedFilesUntilEntryByAuthor(Project project, Entry entry, Author author) throws DatabaseException {
+
+		final String query = "SELECT f FROM file f " +
+		"JOIN f.entry AS entry " +
+		"WHERE f.operationType = 'A' " +
+		"AND entry.project.id = :projectID " +
+		"AND entry.id <= :entryID " +
+		"AND entry.author.id = :authorID " +
+		"AND (f.deletedOn is null OR f.deletedOn.id > :entryID)";
+
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"entryID", entry.getId()};
+		final Object[] parameter3 = new Object[]{"authorID", author.getId()};
+
+		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1, parameter2, parameter3);
+	}
+
+	public List<ObjFile> getAllAddedFilesUntilRevisionByAuthor(Project project, long revision, Author author) throws DatabaseException {
+		final String query = "SELECT f FROM file f " +
+		"JOIN f.entry AS entry " +
+		"WHERE f.operationType = 'A' " +
+		"AND entry.project.id = :projectID " +
+		"AND entry.revision <= :revision " +
+		"AND entry.author.id = :authorID " +
+		"AND (f.deletedOn is null OR f.deletedOn.revision > :revision)";
+
+		final Object[] parameter1 = new Object[]{"projectID", project.getId()};
+		final Object[] parameter2 = new Object[]{"revision", revision};
+		final Object[] parameter3 = new Object[]{"authorID", author.getId()};
+
+		return (ArrayList<ObjFile>) findByQuery(ObjFile.class, query, parameter1, parameter2, parameter3);
+	}
+
 }
