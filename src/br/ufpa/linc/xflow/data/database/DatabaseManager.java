@@ -125,9 +125,9 @@ public class DatabaseManager {
 		
 		String host = "localhost";
 		String port = "3306";
-		String DBname = "xflow_5";
-		String DBUser = "root";
-		String DBpassword = "83861285";
+		String DBname = "xflow";
+		String DBUser = "xflow";
+		String DBpassword = "xflow";
 		String dialect = "br.ufpa.linc.xflow.data.database.XFlowMySqlDialect";
 			
 //		String dialect = databaseProperties.getProperty("dialect");

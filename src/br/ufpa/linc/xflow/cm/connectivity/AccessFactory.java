@@ -34,12 +34,14 @@
 package br.ufpa.linc.xflow.cm.connectivity;
 
 import br.ufpa.linc.xflow.data.entities.Project;
+import br.usp.ime.xflow.cm.connectivity.git.GitAccess;
 
 
 public abstract class AccessFactory {
 
 	public final static int SVN_REPOSITORY = 0;
 	public final static int CVS_REPOSITORY = 1;
+	public final static int GIT_REPOSITORY = 2;
 	
 	public static Access createAccess(final Project project) {
 		
@@ -48,6 +50,10 @@ public abstract class AccessFactory {
 		switch(project.getRepositoryType()) {
 		case SVN_REPOSITORY: access = new SVNAccess();
 			((SVNAccess) access).setForceTemporalConsistencyEnabled(project.isTemporalConsistencyForced());
+			break;
+		case GIT_REPOSITORY:
+			// FIXME: aqui precisa passar o path do GIT!
+			access = new GitAccess("/opt/local/bin/", project.getUrl());
 			break;
 		default:
 			access = null;

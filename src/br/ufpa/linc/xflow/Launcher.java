@@ -35,26 +35,25 @@ package br.ufpa.linc.xflow;
 import java.util.Date;
 
 import br.ufpa.linc.xflow.cm.DataExtractor;
-import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
-import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
-import br.ufpa.linc.xflow.core.processors.callgraph.CallGraphAnalysis;
-import br.ufpa.linc.xflow.core.processors.cochanges.CoChangesAnalysis;
-import br.ufpa.linc.xflow.core.transactions.SlidingTimeWindowProcessor;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
 import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
-import br.ufpa.linc.xflow.exception.core.analysis.AnalysisRangeException;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.exception.persistence.ProjectNameAlreadyExistsException;
 import br.ufpa.linc.xflow.metrics.MetricsEvaluator;
-import br.ufpa.linc.xflow.metrics.cochange.CoChangeCalculator;
-import br.ufpa.linc.xflow.metrics.cochange.StructuralCouplingCalculator;
+import br.ufpa.linc.xflow.metrics.entry.AddedFiles;
+import br.ufpa.linc.xflow.metrics.entry.DeletedFiles;
 import br.ufpa.linc.xflow.metrics.entry.EntryMetricModel;
+import br.ufpa.linc.xflow.metrics.entry.ModifiedFiles;
+import br.ufpa.linc.xflow.metrics.file.Betweenness;
+import br.ufpa.linc.xflow.metrics.file.Centrality;
 import br.ufpa.linc.xflow.metrics.file.FileMetricModel;
+import br.ufpa.linc.xflow.metrics.project.ClusterCoefficient;
+import br.ufpa.linc.xflow.metrics.project.Density;
 import br.ufpa.linc.xflow.metrics.project.ProjectMetricModel;
 import br.ufpa.linc.xflow.presentation.Visualizer;
 import br.ufpa.linc.xflow.util.Filter;
@@ -162,7 +161,7 @@ public class Launcher {
 //		}
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws DatabaseException {
 		
 		/**
 		try{
@@ -193,40 +192,38 @@ public class Launcher {
 		}
 		*/
 		
-		/**
 		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
 		Launcher a = new Launcher();
 		Project p = null;
 		
-		try {
-			p = a.startNewProject("GW Trunk", "anonymous", "anonymous", "file:///home/goliva/workspace/mirrors/subversion/googlecode/gw_trunk", AccessFactory.SVN_REPOSITORY, "GW Trunk (No filter + source code)", true, false);
-		} catch (ProjectNameAlreadyExistsException e) {
-			e.printStackTrace();
-		} catch (DatabaseException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			p = a.startNewProject("Easyclinica", "anonymous", "anonymous", "/Users/mauricioaniche/dev/easyclinica/easyclinica", AccessFactory.GIT_REPOSITORY, "EasyClinica", false, false);
+//		} catch (ProjectNameAlreadyExistsException e) {
+//			e.printStackTrace();
+//		} catch (DatabaseException e) {
+//			e.printStackTrace();
+//		}
 	
-		try {
-			a.downloadProjectData(p, 1, 1541, new Filter(".*?"));
-		} catch (CMException e1) {
-			e1.printStackTrace();
-		} catch (DatabaseException e1) {
-			e1.printStackTrace();
-		}
-		*/
+//		try {
+//			a.downloadProjectData(p, 1, 1541, new Filter(".*?"));
+//		} catch (CMException e1) {
+//			e1.printStackTrace();
+//		} catch (DatabaseException e1) {
+//			e1.printStackTrace();
+//		}
 		
 		
-		Launcher a = new Launcher();
-		Project p = null;
-		
-		try {
-			p = new ProjectDAO().findById(Project.class, 1L);
-			//a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
-			a.resumeProjectDownload(p, 884143, new Filter(".*?\\.java"));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		Launcher a = new Launcher();
+//		Project p = null;
+//		
+//		try {
+//			p = new ProjectDAO().findById(Project.class, 1L);
+//			//a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
+//			a.resumeProjectDownload(p, 884143, new Filter(".*?\\.java"));
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 		
 		/**
 		//Aplicação do Sliding time window algorithm
@@ -237,48 +234,46 @@ public class Launcher {
 		}
 		*/
 		
-		/**
 		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
-		try {
-			//CoChange
-			//Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - All ASF (*.java)", false, 1, 150000, 0, 0, 13, false);
-			Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - GW Trunk", false, 3, 1541, 0, 0, 0, false);
-			//CallGraph
-			//Analysis analysis = AnalysisFactory.createCallGraphAnalysis(p, "CallGraph - All ASF (*.java)", false, 1, 150000, 13);
-			a.processProject(analysis, new Filter(".*?"));
-		} catch (DatabaseException e) {
-			e.printStackTrace();
-		} catch (AnalysisRangeException e) {
-			e.printStackTrace();
-		}
-		*/
+//		try {
+//			//CoChange
+//			//Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - All ASF (*.java)", false, 1, 150000, 0, 0, 13, false);
+//			Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - Easy Clinica", false, 3, 1541, 0, 0, 0, false);
+//			//CallGraph
+//			//Analysis analysis = AnalysisFactory.createCallGraphAnalysis(p, "CallGraph - All ASF (*.java)", false, 1, 150000, 13);
+//			a.processProject(analysis, new Filter(".*?"));
+//		} catch (DatabaseException e) {
+//			e.printStackTrace();
+//		} catch (AnalysisRangeException e) {
+//			e.printStackTrace();
+//		}
 		
-//		FileMetricModel[] fileMetrics = new FileMetricModel[]{
-//	            new Centrality(), new Betweenness()
-//		};
-//
-//		EntryMetricModel[] entryMetrics = new EntryMetricModel[]{
-//	            new AddedFiles(), new ModifiedFiles(), new DeletedFiles()
-//		};
-//
-//		ProjectMetricModel[] projectMetrics = new ProjectMetricModel[]{
-//	            new Density(), new ClusterCoefficient()
-//		};
+		FileMetricModel[] fileMetrics = new FileMetricModel[]{
+	            new Centrality(), new Betweenness()
+		};
+
+		EntryMetricModel[] entryMetrics = new EntryMetricModel[]{
+	            new AddedFiles(), new ModifiedFiles(), new DeletedFiles()
+		};
+
+		ProjectMetricModel[] projectMetrics = new ProjectMetricModel[]{
+	            new Density(), new ClusterCoefficient()
+		};
 //		
 //		//XXX: CÓDIGO PARA CALCULDO DAS MÉTRICAS
-//		try {
-//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 10L), projectMetrics, entryMetrics, fileMetrics);
-//		} catch (DatabaseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		try {
+			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 10L), projectMetrics, entryMetrics, fileMetrics);
+		} catch (DatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 //		
 //		//XXX: CÓDIGO PARA GERAR VISUALIZAÇÕES
-//		try {
-//			a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
-//		} catch (DatabaseException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+		try {
+			a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
+		} catch (DatabaseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
