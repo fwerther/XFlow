@@ -52,7 +52,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		return value;
 	}
 	
-	public void putValueAt(int row, int column, int value){
+	public void putValueAt(int value, int row, int column){
 		if (row >= rows || column >= columns){
 			throw new IllegalArgumentException("Invalid index");
 		}
@@ -84,8 +84,8 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		XFlowSparseMatrixImpl resultMatrix = new XFlowSparseMatrixImpl(rows,columns);
 		for (int i = 0; i < this.rows; i++) {
 			for (int j = 0; j < this.columns; j++) {
-				resultMatrix.incrementValueAt(i,j,this.getValueAt(i,j));
-				resultMatrix.incrementValueAt(i,j,m2.getValueAt(i,j));
+				resultMatrix.incrementValueAt(this.getValueAt(i,j), i, j);
+				resultMatrix.incrementValueAt(m2.getValueAt(i,j), i, j);
 			}
 		}
 		
@@ -103,9 +103,9 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		for (int i = 0; i < this.rows; i++) {
 			for (int j = 0; j < m2.getColumns(); j++) {
 				for (int k = 0; k < this.columns; k++) {
-					resultMatrix.incrementValueAt(i, j, this.getValueAt(i,k) * m2.getValueAt(k,j));
+					resultMatrix.incrementValueAt(this.getValueAt(i,k) * m2.getValueAt(k,j), i, j);
 					if(resultMatrix.getValueAt(i, j) < 0){
-						resultMatrix.putValueAt(i,j,Integer.MAX_VALUE);
+						resultMatrix.putValueAt(Integer.MAX_VALUE, i,j);
 					}
 				}
 			}
@@ -145,7 +145,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		for (int i = 0; i < this.getRows(); i++) {
 			for (int j = 0; j < this.getColumns(); j++) {
 				int value = this.getValueAt(i, j) + m2.getValueAt(i, j);
-				result.putValueAt(i, j, value); 
+				result.putValueAt(value, i, j); 
 			}
 		}
 		return result;
@@ -157,7 +157,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < columns; j++) {
 				int value = this.getValueAt(i,j);
-				resultMatrix.putValueAt(j, i, value);
+				resultMatrix.putValueAt(value, j, i);
 			}
 		}
 		return resultMatrix;
@@ -166,7 +166,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 	public XFlowSparseMatrixImpl createIdentityMatrix(int size){
 		XFlowSparseMatrixImpl identityMatrix = new XFlowSparseMatrixImpl(size,size);
 		for (int i = 0; i < size; i++) {
-			identityMatrix.putValueAt(i, i, 1);
+			identityMatrix.putValueAt(1, i, i);
 		}
 		return identityMatrix;
 	}
@@ -222,7 +222,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		for (int i = 0; i < rows; i++) {
 			for (int j = 0; j < columns; j++) {
 				int value = this.getValueAt(i,j);
-				resultMatrix.putValueAt(j, i, value);
+				resultMatrix.putValueAt(value, j, i);
 			}
 		}
 		return resultMatrix;

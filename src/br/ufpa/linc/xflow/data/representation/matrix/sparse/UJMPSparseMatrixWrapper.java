@@ -79,22 +79,23 @@ public class UJMPSparseMatrixWrapper extends DefaultSparseIntMatrix implements M
 
 	@Override
 	public Matrix createIdentityMatrix(int size) {
+		//TODO;
 		return null;
 	}
 
 	@Override
 	public void applyStatisticalFilters(int support, double confidence) {
-		
+		//TODO;
 	}
 
 	@Override
 	public void incrementMatrixRowsTo(int newSize) {
-		this.setSize(newSize, this.getSize()[1]);
+		this.setSize(this.getSize()[0]+newSize, this.getSize()[1]);
 	}
 
 	@Override
 	public void incrementMatrixColumnsTo(int newSize) {
-		this.setSize(this.getSize()[0], newSize);
+		this.setSize(this.getSize()[0], this.getSize()[1]+newSize);
 	}
 
 }
