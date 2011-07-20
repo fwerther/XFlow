@@ -64,17 +64,17 @@ public final class CoChangesAnalysis extends Analysis {
 			}
 		}
 		
-//		if(matrixCache == null){
+		if(matrixCache == null){
 			matrix = processHistoricalDependencyMatrix(dependency);
-//			matrixCache = matrix;
-//			dependencyCache = dependency;
-//		}
-//		else{
-//			Matrix processedMatrix = processDependencyMatrix(dependency);
-//			matrix = processedMatrix.sumDifferentOrderMatrix(matrixCache);
-//			matrixCache = matrix;
-//			dependencyCache = dependency;
-//		}
+			matrixCache = matrix;
+			dependencyCache = dependency;
+		}
+		else{
+			Matrix processedMatrix = processDependencyMatrix(dependency);
+			matrix = processedMatrix.sumDifferentOrderMatrix(matrixCache);
+			matrixCache = matrix;
+			dependencyCache = dependency;
+		}
 		
 		return matrix;
 	}

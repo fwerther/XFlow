@@ -65,8 +65,8 @@ public class UJMPSparseMatrixWrapper extends DefaultSparseIntMatrix implements M
 			final int maxColumns = (int) Math.max(this.getSize(1), anotherMatrix.getColumns());
 			
 			this.setSize(maxRows, maxColumns);
-			anotherMatrix.incrementMatrixRowsTo(maxRows);
-			anotherMatrix.incrementMatrixColumnsTo(maxColumns);
+			anotherMatrix.incrementMatrixRowsTo(maxRows-anotherMatrix.getRows());
+			anotherMatrix.incrementMatrixColumnsTo(maxColumns-anotherMatrix.getColumns());
 			
 			return new UJMPSparseMatrixWrapper(plus((DefaultSparseIntMatrix) anotherMatrix));
 		}

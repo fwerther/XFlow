@@ -64,7 +64,7 @@ public class GraphRenderer implements VisualizationRenderer<GraphVisualization> 
 	
 	private void constructGraph() throws DatabaseException {
 		if(metricsSession.getAssociatedAnalysis().isCoordinationRequirementPersisted()){
-			this.graph = Converter.convertJungToPrefuseGrapha(metricsSession.getAssociatedAnalysis().processEntryDependencyGraph(metricsSession.getAssociatedAnalysis().getLastEntry(), Dependency.COORD_REQUIREMENTS));
+			this.graph = Converter.convertJungToPrefuseGraph(metricsSession.getAssociatedAnalysis().processEntryDependencyGraph(metricsSession.getAssociatedAnalysis().getLastEntry(), Dependency.COORD_REQUIREMENTS));
 		} else {
 			final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependencyDTO = new CoordinationRequirements();
 			dependencyDTO.setAssociatedAnalysis(metricsSession.getAssociatedAnalysis());
@@ -76,7 +76,7 @@ public class GraphRenderer implements VisualizationRenderer<GraphVisualization> 
 			final Matrix matrix = taskAssignmentMatrix.multiply(taskDependencyMatrix).multiply(taskAssignmentMatrix.getTransposeMatrix());
 			JUNGGraph graph = new JUNGGraph();
 			graph = JUNGGraph.convertMatrixToJUNGGraph(matrix, dependencyDTO);
-			this.graph = Converter.convertJungToPrefuseGrapha(graph);
+			this.graph = Converter.convertJungToPrefuseGraph(graph);
 		}
 		this.currentRevision = metricsSession.getAssociatedAnalysis().getLastEntry().getRevision();
 	}
@@ -298,14 +298,14 @@ public class GraphRenderer implements VisualizationRenderer<GraphVisualization> 
 
 		if(representedDependency == Dependency.COORD_REQUIREMENTS){
 			if(this.metricsSession.getAssociatedAnalysis().isCoordinationRequirementPersisted()){
-				this.graph = Converter.convertJungToPrefuseGrapha(metricsSession.getAssociatedAnalysis().processEntryDependencyGraph(entry, Dependency.COORD_REQUIREMENTS));
+				this.graph = Converter.convertJungToPrefuseGraph(metricsSession.getAssociatedAnalysis().processEntryDependencyGraph(entry, Dependency.COORD_REQUIREMENTS));
 			} else {
 				final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependencyDTO = new DependencyDAO().findDependencyByEntry(metricsSession.getAssociatedAnalysis().getId(), entry.getId(), Dependency.COORD_REQUIREMENTS);
 				final Matrix taskAssignmentMatrix = this.metricsSession.getAssociatedAnalysis().processEntryDependencyMatrix(entry, Dependency.TASK_ASSIGNMENT);
 				final Matrix taskDependencyMatrix = this.metricsSession.getAssociatedAnalysis().processEntryDependencyMatrix(entry, Dependency.TASK_DEPENDENCY);
 				final Matrix matrix = taskAssignmentMatrix.multiply(taskDependencyMatrix).multiply(taskAssignmentMatrix.getTransposeMatrix());
 
-				this.graph = Converter.convertJungToPrefuseGrapha(JUNGGraph.convertMatrixToJUNGGraph(matrix, dependencyDTO));
+				this.graph = Converter.convertJungToPrefuseGraph(JUNGGraph.convertMatrixToJUNGGraph(matrix, dependencyDTO));
 			}
 		} else {
 //			final Dependency<AuthorDependencyObject, AuthorDependencyObject> dependencyDTO = new CoordinationRequirements();
@@ -326,7 +326,7 @@ public class GraphRenderer implements VisualizationRenderer<GraphVisualization> 
 			System.out.println(m.getColumns());
 			graph = JUNGGraph.convertMatrixToJUNGGraph(m, dependency);
 			System.out.println(graph.getGraph());
-			this.graph = Converter.convertJungToPrefuseGrapha(graph);
+			this.graph = Converter.convertJungToPrefuseGraph(graph);
 		}
 		this.getDisplay().getVisualization().addGraph("graph", this.graph.getPrefuseGraph());
 		this.getDisplay().getVisualization().run("draw");

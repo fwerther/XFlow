@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import br.ufpa.linc.xflow.data.dao.BaseDAO;
+import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.AuthorDependencyObject;
 import br.ufpa.linc.xflow.data.entities.Dependency;
 import br.ufpa.linc.xflow.data.entities.DependencyObject;
@@ -75,6 +76,14 @@ public class DependencyDAO extends BaseDAO<Dependency> {
 		final Object[] parameter3 = new Object[]{"dependencyType", dependency.getType()};
 		
 		return (List<Dependency>) findByQuery(Dependency.class, query, parameter1, parameter2, parameter3);
+	}
+	
+	
+	public List<Dependency> findAllDependenciesFromAnalysis(final Analysis analysis) throws DatabaseException {
+		final String query = "SELECT dep from dependency dep where dep.associatedAnalysis.id = :analysisID";
+		final Object[] parameter1 = new Object[]{"analysisID", analysis.getId()};
+		
+		return (List<Dependency>) findByQuery(Dependency.class, query, parameter1);
 	}
 
 	public List<Dependency> findDependenciesBetweenDependencies(Dependency initialEntryDependency, Dependency finalEntryDependency) throws DatabaseException {

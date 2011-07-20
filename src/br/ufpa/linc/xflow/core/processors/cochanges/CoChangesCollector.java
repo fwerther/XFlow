@@ -64,7 +64,7 @@ public final class CoChangesCollector implements DependenciesIdentifier {
 					
 			final Set<DependencySet<FileDependencyObject, FileDependencyObject>> fileDependencies = gatherTaskDependency(entry.getEntryFiles());
 			if(fileDependencies.size() > 0) { 
-				final TaskDependency taskDependency = new TaskDependency();
+				final TaskDependency taskDependency = new TaskDependency(false);
 				taskDependency.setAssociatedAnalysis(analysis);
 				taskDependency.setAssociatedEntry(entry);
 	

@@ -66,7 +66,7 @@ public class XFlowSparseMatrixImpl implements Matrix {
 		}
 		Integer value = getValueAt(row, column);
 		value += increment;
-		putValueAt(row, column, value);
+		putValueAt(value, row, column);
 	}
 		
 	
