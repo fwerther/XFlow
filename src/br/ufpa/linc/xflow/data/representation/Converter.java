@@ -52,7 +52,7 @@ public final class Converter {
 			}
 		}
 		else{
-			for (DependencySet dependencySet : dependencies) {
+			for (@SuppressWarnings("rawtypes") DependencySet dependencySet : dependencies) {
 				if(dependencySet.getDependedObject().getAssignedStamp() > (resultMatrix.getRows()-1)){
 					resultMatrix.incrementMatrixRowsTo(dependencySet.getDependedObject().getAssignedStamp()-resultMatrix.getRows()+1);
 				}
@@ -74,12 +74,8 @@ public final class Converter {
 						continue;
 					}
 					
-					int x = dependencySet.getDependedObject().getAssignedStamp();
-					int y = dependentObject.getAssignedStamp();
-					int v = (Integer) dependencySet.getDependenciesMap().get(dependentObject);
-					
-					resultMatrix.incrementValueAt(v, x, y);
-					resultMatrix.incrementValueAt(v, y, x);
+					resultMatrix.incrementValueAt((Integer) dependencySet.getDependenciesMap().get(dependentObject), dependencySet.getDependedObject().getAssignedStamp(), dependentObject.getAssignedStamp());
+					resultMatrix.incrementValueAt((Integer) dependencySet.getDependenciesMap().get(dependentObject), dependentObject.getAssignedStamp(), dependencySet.getDependedObject().getAssignedStamp());
 					
 				}
 			}
