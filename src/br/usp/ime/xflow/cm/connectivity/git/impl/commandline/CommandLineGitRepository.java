@@ -32,7 +32,7 @@ public class CommandLineGitRepository implements GitRepository {
 	}
 
 	public GitLogResult detail(String hash) {
-		String response = cmd.execute("git show " + hash + " --pretty=format:<GitLogResult><hash>%H</hash><author>%an</author><email>%ae</email><date>%ai</date><message>%s</message></GitLogResult>", basePath);
+		String response = cmd.execute("git show " + hash + " --pretty=format:<GitLogResult><hash>%H</hash><author><![CDATA[%an]]></author><email>%ae</email><date>%ai</date><message><![CDATA[%s]]></message></GitLogResult>", basePath);
 		XStream xs = new XStream(new DomDriver());
 		xs.alias("GitLogResult", GitLogResult.class);
 

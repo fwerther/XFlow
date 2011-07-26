@@ -28,7 +28,17 @@ public class DefaultGitDiffParser implements GitDiffParser {
 		return allDiffs;
 	}
 
-	private int findDiffStart(List<String> lines) {
+	private String findContent(List<String> lines) {
+		int lineDiffsStarts = findTheLineWhereDiffStarts(lines);
+		if(lineDiffsStarts == lines.size()) return "";
+		
+		if(!lines.get(lineDiffsStarts).startsWith("Binary files")) {
+			return transformInStringTheList(lines.subList(lineDiffsStarts+2, lines.size()));
+		}
+		return "";
+	}
+
+	private int findTheLineWhereDiffStarts(List<String> lines) {
 		int start = 0;
 		for(String line : lines) {
 			start++;
@@ -37,13 +47,10 @@ public class DefaultGitDiffParser implements GitDiffParser {
 		return start;
 	}
 	
-	private String findContent(List<String> lines) {
-		return transformInStringTheList(lines.subList(findDiffStart(lines), lines.size()));
-	}
-
 	private ArtifactStatus findStatusIn(List<String> lines) {
 		
-		int modeLine = findDiffStart(lines) - 2;
+		int diffStarts = findTheLineWhereDiffStarts(lines);
+		int modeLine = diffStarts == lines.size() ? 1 : diffStarts - 2;
 		
 		for(ArtifactStatus st : EnumSet.allOf(ArtifactStatus.class)) {
 			if(lines.get(modeLine).startsWith(st.getPattern())) return st;
