@@ -2,22 +2,29 @@ package br.usp.ime.xflow.cm.connectivity.git.impl.commandline;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Scanner;
 
 public class SimpleCommandExecutor implements CommandExecutor {
 
-	private final String gitPath;
-
-	public SimpleCommandExecutor(String gitPath) {
-		this.gitPath = gitPath;
+	private List<EnvironmentVar> vars = null;
+	
+	public void setEnvironmentVar(String name, String value)
+	{
+		if( vars == null )
+			vars = new ArrayList<EnvironmentVar>();
+		
+		vars.add(new EnvironmentVar(name, value));
 	}
-
+	
 	public String execute(String command, String basePath) {
 		StringBuffer total = new StringBuffer();
-		String finalCommand = gitPath + command;
+		String finalCommand = command;
 		Process proc;
 		try {
-			proc = Runtime.getRuntime().exec(finalCommand, null, new File(basePath));
+			proc = Runtime.getRuntime().exec(finalCommand, getEnvTokens(), new File(basePath));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -30,5 +37,36 @@ public class SimpleCommandExecutor implements CommandExecutor {
 		return total.toString();
 
 	}
+	
+	private String[] getEnvTokens()
+	{
+		if( vars == null )
+			return null;
+		
+		String[] envTokenArray = new String[vars.size()];
+		Iterator<EnvironmentVar> envVarIter = vars.iterator();
+		int nEnvVarIndex = 0; 
+		while (envVarIter.hasNext() == true)
+		{
+			EnvironmentVar envVar = (EnvironmentVar)(envVarIter.next());
+			String envVarToken = envVar.fName + "=" + envVar.fValue;
+			envTokenArray[nEnvVarIndex++] = envVarToken;
+		}
+		
+		return envTokenArray;
+	}	
 
 }
+
+class EnvironmentVar
+{
+	public String fName = null;
+	public String fValue = null;
+	
+	public EnvironmentVar(String name, String value)
+	{
+		fName = name;
+		fValue = value;
+	}
+}
+
