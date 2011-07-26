@@ -22,11 +22,9 @@ import br.usp.ime.xflow.cm.connectivity.git.sourcecode.NoSourceCode;
 
 public class GitAccess extends Access {
 
-	private final String gitPath;
 	private final String repositoryPath;
 
-	public GitAccess(String gitPath, String repositoryPath) {
-		this.gitPath = gitPath;
+	public GitAccess(String repositoryPath) {
 		this.repositoryPath = repositoryPath;
 	}
 	
@@ -40,7 +38,7 @@ public class GitAccess extends Access {
 	public ArrayList<Commit> collectData(Date startDate, Date endDate,
 			boolean downloadCode) throws CMException {
 		System.out.println("Starting git mechanism...");
-		CommandLineGitRepository git = new CommandLineGitRepository(repositoryPath, new SimpleCommandExecutor(gitPath));
+		CommandLineGitRepository git = new CommandLineGitRepository(repositoryPath, new SimpleCommandExecutor());
 
 		GitLogParserRunner runner = new GitLogParserRunner(git,new DefaultGitDiffParser(), (downloadCode? new FilterSourceCodeByFileType(git, new String[]{getFilter().getExtension()})  : new NoSourceCode()));
 

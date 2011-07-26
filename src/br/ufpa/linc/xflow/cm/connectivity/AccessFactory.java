@@ -52,8 +52,7 @@ public abstract class AccessFactory {
 			((SVNAccess) access).setForceTemporalConsistencyEnabled(project.isTemporalConsistencyForced());
 			break;
 		case GIT_REPOSITORY:
-			// FIXME: aqui precisa passar o path do GIT!
-			access = new GitAccess("/opt/local/bin/", project.getUrl());
+			access = new GitAccess(project.getUrl());
 			break;
 		default:
 			access = null;
