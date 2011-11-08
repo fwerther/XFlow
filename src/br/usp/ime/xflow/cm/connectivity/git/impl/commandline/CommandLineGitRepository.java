@@ -23,16 +23,16 @@ public class CommandLineGitRepository implements GitRepository {
 	}
 
 	public String sourceOf(String hash, String fileName) {
-		return cmd.execute("git show " + hash + ":" + fileName, basePath);
+		return cmd.execute("C:\\Program Files (x86)\\Git\\bin\\git show " + hash + ":" + fileName, basePath);
 	}
 
 	public List<String> allCommits() {
-		String response = cmd.execute("git log --pretty=format:%H", basePath);
+		String response = cmd.execute("C:\\Program Files (x86)\\Git\\bin\\git log --pretty=format:%H", basePath);
 		return Arrays.asList(response.replace("\r", "").split("\n"));
 	}
 
 	public GitLogResult detail(String hash) {
-		String response = cmd.execute("git show " + hash + " --pretty=format:<GitLogResult><hash>%H</hash><author><![CDATA[%an]]></author><email>%ae</email><date>%ai</date><message><![CDATA[%s]]></message></GitLogResult>", basePath);
+		String response = cmd.execute("C:\\Program Files (x86)\\Git\\bin\\git show " + hash + " --pretty=format:<GitLogResult><hash>%H</hash><author><![CDATA[%an]]></author><email>%ae</email><date>%ai</date><message><![CDATA[%s]]></message></GitLogResult>", basePath);
 		XStream xs = new XStream(new DomDriver());
 		xs.alias("GitLogResult", GitLogResult.class);
 
@@ -47,7 +47,7 @@ public class CommandLineGitRepository implements GitRepository {
 		String before = sdf.format(end.getTime());
 		String after = sdf.format(start.getTime());
 		
-		String response = cmd.execute("git log --pretty=format:%H --before=" + before + " --after=" + after, basePath);
+		String response = cmd.execute("C:\\Program Files (x86)\\Git\\bin\\git log --pretty=format:%H --before=" + before + " --after=" + after, basePath);
 		return Arrays.asList(response.replace("\r", "").split("\n"));
 	}
 	
