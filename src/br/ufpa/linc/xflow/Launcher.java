@@ -32,9 +32,12 @@
  */
 
 package br.ufpa.linc.xflow;
+import java.util.Calendar;
 import java.util.Date;
 
 import br.ufpa.linc.xflow.cm.DataExtractor;
+import br.ufpa.linc.xflow.cm.connectivity.AccessFactory;
+import br.ufpa.linc.xflow.core.AnalysisFactory;
 import br.ufpa.linc.xflow.core.DataProcessor;
 import br.ufpa.linc.xflow.data.dao.cm.ProjectDAO;
 import br.ufpa.linc.xflow.data.dao.core.AnalysisDAO;
@@ -42,6 +45,7 @@ import br.ufpa.linc.xflow.data.entities.Analysis;
 import br.ufpa.linc.xflow.data.entities.Entry;
 import br.ufpa.linc.xflow.data.entities.Project;
 import br.ufpa.linc.xflow.exception.cm.CMException;
+import br.ufpa.linc.xflow.exception.core.analysis.AnalysisRangeException;
 import br.ufpa.linc.xflow.exception.persistence.DatabaseException;
 import br.ufpa.linc.xflow.exception.persistence.ProjectNameAlreadyExistsException;
 import br.ufpa.linc.xflow.metrics.MetricsEvaluator;
@@ -113,6 +117,11 @@ public class Launcher {
 		dataExtractor.extractData(project, firstRevision, lastRevision, filter);
 	}
 	
+	public void downloadProjectData(Project project, Date initialDate, Date lastDate, Filter filter) throws CMException, DatabaseException {
+		DataExtractor dataExtractor = new DataExtractor();
+		dataExtractor.extractData(project, initialDate, lastDate, filter);
+	}
+	
 	public void resumeProjectDownload(Project project, int newFinalCommit, Filter filter) throws CMException, DatabaseException{
 		int lastDownloadedCommit = (int) project.getLastRevision();
 		DataExtractor extractor = new DataExtractor();
@@ -161,84 +170,40 @@ public class Launcher {
 //		}
 	}
 	
-	public static void main(String[] args) throws DatabaseException {
-		
-		/**
-		try{
-			//CallGraphAnalysis callGraphAnalysis = (CallGraphAnalysis)new AnalysisDAO().findById(Analysis.class, 7L);
-			//StructuralCouplingCalculator couplingCalculator = new StructuralCouplingCalculator();
-			//couplingCalculator.calculate(callGraphAnalysis);
-			
-			CoChangesAnalysis coChangesAnalysis = (CoChangesAnalysis)new AnalysisDAO().findById(Analysis.class, 1L);
-			CoChangeCalculator coChangeCalculator = new CoChangeCalculator();
-			coChangeCalculator.calculate(coChangesAnalysis);
-		}catch(Exception e){
-			e.printStackTrace();
-		}
-		*/
-		
-		/**
-		Project p = null;
-	
-		try {
-			p = new ProjectDAO().findById(Project.class, 2L);
-			a.resumeProjectDownload(p, 200000, new Filter(".*?\\.java"));
-		} catch (DatabaseException e) {
-		// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (CMException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		*/
-		
+	public static void main(String[] args) {
+
 		//XXX: CÓDIGO PARA COLETA DE DADOS DO PROJETO
 		Launcher a = new Launcher();
 		Project p = null;
-		
-//		try {
-//			p = a.startNewProject("Easyclinica", "anonymous", "anonymous", "/Users/mauricioaniche/dev/easyclinica/easyclinica", AccessFactory.GIT_REPOSITORY, "EasyClinica", false, false);
-//		} catch (ProjectNameAlreadyExistsException e) {
-//			e.printStackTrace();
-//		} catch (DatabaseException e) {
-//			e.printStackTrace();
-//		}
-	
-//		try {
-//			a.downloadProjectData(p, 1, 1541, new Filter(".*?"));
-//		} catch (CMException e1) {
-//			e1.printStackTrace();
-//		} catch (DatabaseException e1) {
-//			e1.printStackTrace();
-//		}
-		
-		
-//		Launcher a = new Launcher();
-//		Project p = null;
-//		
-//		try {
-//			p = new ProjectDAO().findById(Project.class, 1L);
-//			//a.resumeProjectDownload(p, 7185, new Filter(".*?/trunk/.*?(\\.(java|html|h|c|cpp))"));
-//			a.resumeProjectDownload(p, 884143, new Filter(".*?\\.java"));
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-		
-		/**
-		//Aplicação do Sliding time window algorithm
-		try{
-			SlidingTimeWindowProcessor.process(p, 200);
-		} catch(Exception e){
+
+		try {
+			p = a.startNewProject("EngSoft2011_Grupo1", "anonymous", "anonymous", 
+					"D:\\git\\EngSoft2011_Grupo1", AccessFactory.GIT_REPOSITORY, 
+					"EngSoft2011_Grupo1", false, false);
+			
+			Calendar calendar = Calendar.getInstance();
+			calendar.set(2011, Calendar.AUGUST, 31);
+			Date initialDate = calendar.getTime();
+			
+			calendar.set(2011, Calendar.NOVEMBER, 7);
+			Date finalDate = calendar.getTime();
+			
+			a.downloadProjectData(p, initialDate, finalDate, new Filter(".*?"));
+		} catch (ProjectNameAlreadyExistsException e) {
+			e.printStackTrace();
+		} catch (DatabaseException e) {
+			e.printStackTrace();
+		} catch (CMException e) {
 			e.printStackTrace();
 		}
-		*/
+
 		
+
+
 		//XXX: CÓDIGO PARA PROCESSAMENTO DO PROJETO
 //		try {
 //			//CoChange
-//			//Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - All ASF (*.java)", false, 1, 150000, 0, 0, 13, false);
-//			Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - Easy Clinica", false, 3, 1541, 0, 0, 0, false);
+//			Analysis analysis = AnalysisFactory.createCoChangesAnalysis(p, "CoChanges - Easy Clinica", false, 1, 1000, 0, 0, 0, false);
 //			//CallGraph
 //			//Analysis analysis = AnalysisFactory.createCallGraphAnalysis(p, "CallGraph - All ASF (*.java)", false, 1, 150000, 13);
 //			a.processProject(analysis, new Filter(".*?"));
@@ -247,33 +212,33 @@ public class Launcher {
 //		} catch (AnalysisRangeException e) {
 //			e.printStackTrace();
 //		}
-		
-		FileMetricModel[] fileMetrics = new FileMetricModel[]{
-	            new Centrality(), new Betweenness()
-		};
-
-		EntryMetricModel[] entryMetrics = new EntryMetricModel[]{
-	            new AddedFiles(), new ModifiedFiles(), new DeletedFiles()
-		};
-
-		ProjectMetricModel[] projectMetrics = new ProjectMetricModel[]{
-	            new Density(), new ClusterCoefficient()
-		};
-//		
-//		//XXX: CÓDIGO PARA CALCULDO DAS MÉTRICAS
-		try {
-			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 10L), projectMetrics, entryMetrics, fileMetrics);
-		} catch (DatabaseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-//		
-//		//XXX: CÓDIGO PARA GERAR VISUALIZAÇÕES
-		try {
-			a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
-		} catch (DatabaseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//
+//		FileMetricModel[] fileMetrics = new FileMetricModel[]{
+//	            new Centrality(), new Betweenness()
+//		};
+//
+//		EntryMetricModel[] entryMetrics = new EntryMetricModel[]{
+//	            new AddedFiles(), new ModifiedFiles(), new DeletedFiles()
+//		};
+//
+//		ProjectMetricModel[] projectMetrics = new ProjectMetricModel[]{
+//	            new Density(), new ClusterCoefficient()
+//		};
+////		
+////		//XXX: CÓDIGO PARA CALCULDO DAS MÉTRICAS
+//		try {
+//			a.evaluateMetrics(new AnalysisDAO().findById(Analysis.class, 10L), projectMetrics, entryMetrics, fileMetrics);
+//		} catch (DatabaseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+////		
+////		//XXX: CÓDIGO PARA GERAR VISUALIZAÇÕES
+//		try {
+//			a.drawVisualizations(new AnalysisDAO().findById(Analysis.class, 1L));
+//		} catch (DatabaseException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 	}
 }

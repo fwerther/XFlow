@@ -33,6 +33,7 @@
 
 package br.ufpa.linc.xflow.cm;
 
+import java.util.Date;
 import java.util.List;
 
 import org.tmatesoft.svn.core.SVNException;
@@ -98,6 +99,21 @@ public class DataExtractor {
 				}
 			}
 		}
+		new ProjectDAO().update(project);
+	}
+	
+	public void extractData(final Project project, final Date initialDate, final Date finalDate, final Filter filter) throws CMException, DatabaseException{
+		final ConnectionHandler connectionHandler = new ConnectionHandler(project);
+		connectionHandler.setDownloadCodeEnabled(project.isCodeDownloadEnabled());
+		connectionHandler.getAccess().setUrl(project.getUrl());
+		connectionHandler.getAccess().setUsername(project.getUsername());
+		connectionHandler.getAccess().setPassword(project.getPassword());
+		connectionHandler.getAccess().setFilter(filter);
+
+		final EntriesTransformer transformer = new EntriesTransformer();
+
+		final List<Commit> dataCollected = connectionHandler.gatherData(initialDate, finalDate);
+		transformer.transformData(project, dataCollected);
 		new ProjectDAO().update(project);
 	}
 	

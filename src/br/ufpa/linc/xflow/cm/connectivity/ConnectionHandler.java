@@ -34,6 +34,7 @@
 
 package br.ufpa.linc.xflow.cm.connectivity;
 
+import java.util.Date;
 import java.util.List;
 
 import br.ufpa.linc.xflow.cm.info.Commit;
@@ -53,6 +54,10 @@ public class ConnectionHandler {
 	
 	public List<Commit> gatherData(final long startRevision, final long endRevision) throws CMException, DatabaseException {
 		return access.collectData(startRevision, endRevision, this.downloadCodeEnabled);
+	}
+	
+	public List<Commit> gatherData(final Date initialDate, final Date finalDate) throws CMException, DatabaseException {
+		return access.collectData(initialDate, finalDate, this.downloadCodeEnabled);
 	}
 	
 	public Access getAccess() {

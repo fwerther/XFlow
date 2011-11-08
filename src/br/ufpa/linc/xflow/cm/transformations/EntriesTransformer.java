@@ -58,7 +58,11 @@ public class EntriesTransformer {
 		for (int i = 0; i < commits.size(); i++) {
 
 			final Commit commit = commits.get(i);
-			System.out.print("Transforming commit "+commit.getRevisionNbr()+"\n");
+			if(commit.getRevisionNbr() != 0){
+				System.out.print("Transforming commit "+commit.getRevisionNbr()+"\n");
+			} else {
+				System.out.println("Transforming commit "+commit.getLogMessage()+" "+commit.getDate()+"\n");
+			}
 
 			if(commit.getArtifacts().isEmpty()){
 				System.out.println("Commit does not match data filter");
